@@ -1,4 +1,5 @@
-# PI_V_NutriCorp
+# NutriCorp
+
 ## Índice
 * [Descrição do Projeto](#descrição-do-projeto)
 * [Objetivos](#objetivos)
@@ -23,14 +24,11 @@ Ao utilizar o NutriCorp para oferecer escolhas nutricionais conscientes e person
 
 A NutriCorp é uma plataforma capaz de transformar a alimentação no ambiente de trabalho em uma oportunidade de promoção da saúde, prevenção e melhoria da qualidade de vida.
 
-
-
 ## Objetivos
 Desenvolver uma plataforma corporativa integrada de saúde preventiva e gestão nutricional que possibilite às organizações promover hábitos alimentares mais saudáveis, facilitar o acesso dos colaboradores a informações nutricionais e apoiar a gestão dos serviços de alimentação corporativa, utilizando a tecnologia como instrumento de integração entre colaboradores, gestores e serviços de alimentação. 
 
-
 ## Funcionalidades 
-(MVP)
+MVP
 1. Cadastro da organização.
 2. Cadastro do colaborador.
 3. Login e controle de acesso.
@@ -42,7 +40,6 @@ Desenvolver uma plataforma corporativa integrada de saúde preventiva e gestão 
 9. Registro das refeições.
 10. Painel básico com indicadores consolidados.
 Funcionalidades mais avançadas poderão ser incorporadas posteriormente, como integração com sistemas corporativos, integração com restaurantes externos e recursos analíticos mais avançados.
-
 
 ## Tecnologias Utilizadas
 
@@ -64,18 +61,22 @@ Funcionalidades mais avançadas poderão ser incorporadas posteriormente, como i
 - Railway
 
 ## Estrutura do Projeto 
-
+--- WIP ---
 
 ## Protótipo
+
+### Tela Inicial
 <img width="1920" height="856" alt="Aplicação Web" src="https://github.com/user-attachments/assets/2896469c-005e-4123-801e-33367d77b883" />
-Fluxo Colaborador
+
+### Fluxo Colaborador
 <img width="1920" height="856" alt="Aplicação Web - Cadastro Usuário" src="https://github.com/user-attachments/assets/43a8a2a7-d38d-44d8-afd7-788249e70b97" />
 <img width="1920" height="856" alt="Aplicação Web Colaborador - Tela inicial" src="https://github.com/user-attachments/assets/e38b6f63-524c-4e33-96f6-b77cb56df17c" />
 <img width="1920" height="856" alt="NutriCorp — Preferências e restrições alimentares" src="https://github.com/user-attachments/assets/d58d8382-9e82-4a07-99de-28bbf2a66638" />
 <img width="1920" height="856" alt="Aplicação Web Colaborador - Cardápios" src="https://github.com/user-attachments/assets/a65338cd-e842-410e-a7f5-f63eae202a7c" />
 <img width="1920" height="856" alt="Aplicação Web Colaborador - Cardápios-1" src="https://github.com/user-attachments/assets/ea9417bf-7bf3-4d70-a0e9-b79ff985751a" />
 <img width="1920" height="856" alt="NutriCorp — Compatibilidade das refeições" src="https://github.com/user-attachments/assets/79271d7a-cc43-420a-8db3-17733f414731" />
-Fluxo Organização
+
+### Fluxo Organização
 <img width="1920" height="856" alt="Aplicação Web - Cadastro Usuário-1" src="https://github.com/user-attachments/assets/6b791a92-e19d-4cbe-821d-06fd5f47fc25" />
 <img width="1920" height="856" alt="Aplicação Web Administrativa - Tela inicial" src="https://github.com/user-attachments/assets/ae27c3e0-d1bd-41c3-8fd6-76181ddd916d" />
 <img width="1920" height="856" alt="NutriCorp — Cadastro de cardápio" src="https://github.com/user-attachments/assets/33c47dbf-3021-4b7e-8f35-c9ece3877c5b" />
@@ -85,9 +86,10 @@ Fluxo Organização
 <img width="1920" height="856" alt="NutriCorp — Indicadores consolidados" src="https://github.com/user-attachments/assets/c64f7c53-8c59-4fdf-b8be-e933d4590db5" />
 
 ## Vídeo Demonstrativo
-
+--- WIP ---
 
 ## Intruções de Execução
+--- WIP ---
 
 ## Autores do Projeto
 - Ana Rita Fonseca Ferreira
