@@ -39,6 +39,7 @@ MVP
 8. Identificação de refeições incompatíveis com restrições cadastradas.
 9. Registro das refeições.
 10. Painel básico com indicadores consolidados.
+    
 Funcionalidades mais avançadas poderão ser incorporadas posteriormente, como integração com sistemas corporativos, integração com restaurantes externos e recursos analíticos mais avançados.
 
 ## Tecnologias Utilizadas
