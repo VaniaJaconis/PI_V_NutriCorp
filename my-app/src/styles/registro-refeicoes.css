@@ -1,0 +1,36 @@
+.pagina-registro-refeicoes{position:relative;max-width:1280px;margin:0 auto;padding:32px 75px 40px 80px;}
+.pagina-registro-refeicoes .marca{font-size:40px;line-height:1.2;margin:0 0 24px;}
+.registro-voltar{position:absolute;left:30px;top:32px;border:2px solid #353535;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:22px;color:#353535;}
+.pagina-registro-refeicoes h1{text-align:left;font-size:22px;line-height:1.4;margin:0 0 4px;}
+.registro-introducao{font-size:14px;line-height:1.5;margin:0 0 20px;}
+.registro-paineis{display:grid;grid-template-columns:minmax(0,.87fr) minmax(0,1fr);gap:20px;}
+.registro-painel{min-width:0;padding:20px;background:#d9d9d9;border-radius:12px;}
+.registro-painel h2{font-size:16px;line-height:1.4;margin:0 0 10px;}
+.registro-campo{min-width:0;margin-bottom:14px;}
+.registro-campo label{display:block;font-size:13px;line-height:1.4;font-weight:700;margin-bottom:5px;}
+.registro-campo input,.registro-campo select{font:inherit;font-size:14px;color:#4a4a4a;background:white;height:42px;width:100%;min-width:0;max-width:100%;padding:0 10px;border:1px solid transparent;border-radius:12px;}
+.registro-campo select:focus-visible{outline:3px solid #40782b;outline-offset:3px;}
+.registro-campo select[aria-invalid='true'],.registro-campo input[aria-invalid='true']{border-color:#b3261e;}
+.registro-dupla{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.registro-compatibilidade{font-size:13px;line-height:1.5;padding:8px 12px;border-radius:10px;background:#eaf2e3;color:#195500;margin-bottom:14px;}
+.registro-compatibilidade.registro-atencao{background:#faeae5;color:#a33322;}
+.registro-tabela{width:100%;table-layout:fixed;border-spacing:0 8px;font-size:12px;line-height:1.5;}
+.registro-tabela th{text-align:left;font-size:11px;padding-bottom:4px;}
+.registro-tabela th:first-child{width:26%;}.registro-tabela th:last-child{width:20%;}
+.registro-tabela td{background:white;padding:12px 8px;overflow-wrap:anywhere;vertical-align:middle;}
+.registro-tabela td:first-child{border-radius:12px 0 0 12px;}.registro-tabela td:last-child{border-radius:0 12px 12px 0;}
+.registro-nota{font-size:12px;line-height:1.5;color:#60675c;margin:6px 0 14px;}
+.registro-vazio{font-size:14px;line-height:1.6;padding:16px 0;}
+.registro-rodape{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin-top:22px;}
+.registro-rodape p{font-size:12px;line-height:1.5;margin:4px 0 8px;}
+.registro-acoes{display:flex;gap:16px;flex-shrink:0;}
+.registro-acoes button{width:200px;min-height:44px;font-size:14px;border-radius:12px;}
+.registro-acoes .registro-cancelar{width:145px;background:white;color:#4a4a4a;border:1px solid #bdc6b8;}
+.registro-acoes button:disabled{opacity:.65;cursor:not-allowed;}
+.registro-feedback{color:var(--verde);font-size:14px;line-height:1.5;}
+.registro-repetir{width:auto;font-size:16px;}
+.registro-voltar:focus-visible,.registro-link:focus-visible{outline:3px solid #40782b;outline-offset:3px;}
+.registro-link{display:inline-block;color:var(--verde);font-size:15px;font-weight:650;margin-top:20px;}
+.inicio-colaborador .registro-menu{display:block;text-align:center;}
+@media(max-width:1000px){.pagina-registro-refeicoes{padding-inline:24px;}.registro-voltar{left:12px;top:16px;}.registro-rodape{flex-direction:column;}.registro-acoes{align-self:flex-end;}}
+@media(max-width:700px){.pagina-registro-refeicoes{padding:24px 16px 32px;}.pagina-registro-refeicoes .marca{font-size:36px;margin-bottom:28px;}.registro-paineis{grid-template-columns:1fr;}.registro-painel{padding:18px 14px;}.registro-dupla{grid-template-columns:1fr;gap:0;}.registro-acoes{width:100%;flex-direction:column-reverse;gap:12px;}.registro-acoes button,.registro-acoes .registro-cancelar{width:100%;}}

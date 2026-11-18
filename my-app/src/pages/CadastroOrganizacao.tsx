@@ -14,7 +14,9 @@ const campos = [
   { nome: 'senha', titulo: 'Senha', autocomplete: 'new-password' },
 ] as const;
 
-export default function CadastroOrganizacao() {
+interface Props { onCadastroConcluido?: (nomeFantasia: string) => void; }
+
+export default function CadastroOrganizacao({ onCadastroConcluido }: Props) {
   const [dados, setDados] = useState<NovaOrganizacao>(vazio);
   const [erros, setErros] = useState<ErrosOrganizacao>({});
   const [estado, setEstado] = useState<'inicial' | 'enviando' | 'sucesso' | 'erro'>('inicial');
@@ -44,7 +46,7 @@ export default function CadastroOrganizacao() {
       setMensagem(cadastro.modo === 'simulado'
         ? 'Cadastro simulado concluído. Nenhuma organização foi criada e nenhum dado foi salvo.'
         : 'Organização cadastrada com sucesso.');
-  
+      onCadastroConcluido?.(dados.nomeFantasia.trim());
     } catch {
       setEstado('erro'); setMensagem('Não foi possível cadastrar a organização. Revise os dados ou tente novamente.');
     } finally { bloqueio.current = false; }

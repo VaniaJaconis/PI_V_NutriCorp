@@ -88,6 +88,7 @@ export default function CompatibilidadeRefeicao({ refeicaoId }: { refeicaoId: st
                 {salvando ? 'Selecionando…' : selecionada ? 'Alternativa selecionada' : 'Selecionar alternativa'}
               </button>
               {selecionada && !alternativaCompativel && <p>Seu perfil mudou. Revise a seleção anterior.</p>}
+              {selecionada && <a className="registro-link" href={`#/colaborador/refeicoes?opcao=${encodeURIComponent(dados.alternativa.id)}`}>Registrar consumo desta alternativa</a>}
             </> : <p>Nenhuma alternativa disponível para esta refeição.</p>}
           </section>
         </div>

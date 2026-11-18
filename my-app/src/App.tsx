@@ -3,7 +3,12 @@ import CadastroColaborador from './pages/CadastroColaborador';
 import CadastroOrganizacao from './pages/CadastroOrganizacao';
 import Login from './pages/Login';
 import InicioOrganizacao from './pages/InicioOrganizacao';
+import OrganizacaoPendente from './pages/OrganizacaoPendente';
+import CadastroCardapio from './pages/CadastroCardapio';
+import { limparCardapioOrganizacaoSimulado } from './services/cardapiosOrganizacao';
 import InicioColaborador from './pages/InicioColaborador';
+import RegistroRefeicoes from './pages/RegistroRefeicoes';
+import { limparRegistrosSimulados } from './services/registrosRefeicoes';
 import TelaPendente from './pages/TelaPendente';
 import PreferenciasColaborador from './pages/PreferenciasColaborador';
 import CardapiosColaborador from './pages/CardapiosColaborador';
@@ -36,18 +41,24 @@ export default function App() {
       '/': 'Login',
       '/login': 'Login',
       '/organizacao': 'Área da organização',
+      '/organizacao/acessos': 'Controle de Acesso',
+      '/organizacao/cardapios': 'Cardápios e Refeições',
+      '/organizacao/indicadores': 'Indicadores',
       '/cadastro': 'Cadastro do colaborador',
       '/organizacao/cadastro': 'Cadastro da organização',
       '/colaborador': 'Início do colaborador',
       '/colaborador/preferencias': 'Preferência e Restrições',
       '/colaborador/cardapios': 'Cardápios',
       '/colaborador/compatibilidade': 'Compatibilidade das refeições',
+      '/colaborador/refeicoes': 'Registro de refeições',
     };
     document.title = `${titulos[caminho] ?? 'Página não encontrada'} | NutriCorp`;
     document.querySelector<HTMLElement>('h1')?.focus();
   }, [rota, caminho]);
 
   if (caminho === '/login' || caminho === '/') return <Login onEntrar={resultado => {
+    limparRegistrosSimulados();
+    limparCardapioOrganizacaoSimulado();
     limparPreferenciasSimuladas();
     limparSelecoesSimuladas();
     setNome(''); setNomeOrganizacao('');
@@ -58,9 +69,19 @@ export default function App() {
     }
   }} />;
   if (caminho === '/organizacao') return <InicioOrganizacao nome={nomeOrganizacao} />;
-  if (caminho === '/organizacao/cadastro') return <CadastroOrganizacao />;
+  if (caminho === '/organizacao/acessos') return <OrganizacaoPendente titulo="Controle de Acesso" />;
+  if (caminho === '/organizacao/cardapios') return <CadastroCardapio nomeOrganizacao={nomeOrganizacao} />;
+  if (caminho === '/organizacao/indicadores') return <OrganizacaoPendente titulo="Indicadores" />;
+  if (caminho === '/organizacao/cadastro') return <CadastroOrganizacao onCadastroConcluido={nomeFantasia => {
+    limparRegistrosSimulados();
+    limparCardapioOrganizacaoSimulado();
+    limparPreferenciasSimuladas(); limparSelecoesSimuladas(); setNome('');
+    setNomeOrganizacao(nomeFantasia); window.location.hash = '/organizacao';
+  }} />;
   if (caminho === '/cadastro') return (
     <CadastroColaborador onCadastroConcluido={(nomeCompleto) => {
+      limparRegistrosSimulados();
+      limparCardapioOrganizacaoSimulado();
       limparPreferenciasSimuladas();
       limparSelecoesSimuladas();
       setNome(nomeCompleto);
@@ -70,6 +91,7 @@ export default function App() {
   if (caminho === '/colaborador') return <InicioColaborador nome={nome} />;
   if (caminho === '/colaborador/preferencias') return <PreferenciasColaborador />;
   if (caminho === '/colaborador/cardapios') return <CardapiosColaborador />;
+  if (caminho === '/colaborador/refeicoes') return <RegistroRefeicoes key={rota} opcaoInicial={new URLSearchParams(rota.split('?')[1]).get('opcao') ?? ''} />;
   if (caminho === '/colaborador/compatibilidade') return <CompatibilidadeRefeicao key={refeicaoId} refeicaoId={refeicaoId} />;
   return <TelaPendente titulo="Página não encontrada" mensagem="Não encontramos a página solicitada." />;
 }

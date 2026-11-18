@@ -13,6 +13,7 @@ export default function InicioColaborador({ nome }: Props) {
         <a className="acao-colaborador" href="#/colaborador/preferencias">Preferência e Restrições</a>
         <a className="acao-colaborador" href="#/colaborador/cardapios">Cardápios</a>
       </nav>
+      <a className="registro-link registro-menu" href="#/colaborador/refeicoes">Registrar refeição e consultar histórico</a>
     </main>
   );
 }
