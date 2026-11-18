@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { consultarPreferencias, salvarPreferencias } from '../services/preferencias';
-import type { PerfilAlimentar, PreferenciasColaborador as Dados, RestricaoAlimentar } from '../types/preferencias';
+import {
+  consultarPreferencias,
+  salvarPreferencias,
+} from '../services/preferencias';
+import type {
+  PerfilAlimentar,
+  PreferenciasColaborador as Dados,
+  RestricaoAlimentar,
+} from '../types/preferencias';
 import '../styles/preferencias.css';
 
 const perfis: { valor: PerfilAlimentar; titulo: string }[] = [
@@ -10,9 +17,12 @@ const perfis: { valor: PerfilAlimentar; titulo: string }[] = [
   { valor: 'pescetariana', titulo: 'Pescetariana' },
 ];
 const restricoes: { valor: RestricaoAlimentar; titulo: string }[] = [
-  { valor: 'lactose', titulo: 'Lactose' }, { valor: 'gluten', titulo: 'Glúten' },
-  { valor: 'amendoim', titulo: 'Amendoim' }, { valor: 'castanhas', titulo: 'Castanhas' },
-  { valor: 'ovo', titulo: 'Ovo' }, { valor: 'soja', titulo: 'Soja' },
+  { valor: 'lactose', titulo: 'Lactose' },
+  { valor: 'gluten', titulo: 'Glúten' },
+  { valor: 'amendoim', titulo: 'Amendoim' },
+  { valor: 'castanhas', titulo: 'Castanhas' },
+  { valor: 'ovo', titulo: 'Ovo' },
+  { valor: 'soja', titulo: 'Soja' },
 ];
 
 export default function PreferenciasColaborador() {
@@ -29,111 +39,232 @@ export default function PreferenciasColaborador() {
     setCarregando(true);
     setErro('');
     consultarPreferencias()
-      .then(resultado => { if (ativo) setDados(resultado); })
-      .catch(() => { if (ativo) setErro('Não foi possível carregar suas preferências. Tente novamente.'); })
-      .finally(() => { if (ativo) setCarregando(false); });
-    return () => { ativo = false; };
+      .then((resultado) => {
+        if (ativo) setDados(resultado);
+      })
+      .catch(() => {
+        if (ativo)
+          setErro(
+            'Não foi possível carregar suas preferências. Tente novamente.',
+          );
+      })
+      .finally(() => {
+        if (ativo) setCarregando(false);
+      });
+    return () => {
+      ativo = false;
+    };
   }, [tentativa]);
 
   function alterar(atualizacao: Partial<Dados>) {
-    setDados(anterior => anterior ? { ...anterior, ...atualizacao } : anterior);
+    setDados((anterior) =>
+      anterior ? { ...anterior, ...atualizacao } : anterior,
+    );
     setErro('');
     setAviso('');
   }
 
   function alternarRestricao(valor: RestricaoAlimentar) {
     if (!dados) return;
-    alterar({ restricoes: dados.restricoes.includes(valor)
-      ? dados.restricoes.filter(item => item !== valor) : [...dados.restricoes, valor] });
+    alterar({
+      restricoes: dados.restricoes.includes(valor)
+        ? dados.restricoes.filter((item) => item !== valor)
+        : [...dados.restricoes, valor],
+    });
   }
 
   async function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     if (!dados || bloqueio.current) return;
     bloqueio.current = true;
-    setSalvando(true); setErro(''); setAviso('');
+    setSalvando(true);
+    setErro('');
+    setAviso('');
     try {
-      const resultado = await salvarPreferencias({ ...dados,
-        alimentosEvitar: dados.alimentosEvitar.trim(), outrasOrientacoes: dados.outrasOrientacoes.trim() });
-      setAviso(resultado.modo === 'simulado'
-        ? 'Preferências salvas nesta demonstração. Ao recarregar a página, os dados serão apagados.'
-        : 'Preferências salvas com sucesso.');
+      const resultado = await salvarPreferencias({
+        ...dados,
+        alimentosEvitar: dados.alimentosEvitar.trim(),
+        outrasOrientacoes: dados.outrasOrientacoes.trim(),
+      });
+      setAviso(
+        resultado.modo === 'simulado'
+          ? 'Preferências salvas (simulação). Os dados são apagados ao recarregar.'
+          : 'Preferências salvas com sucesso.',
+      );
     } catch {
-      setErro('Não foi possível salvar suas preferências. Suas escolhas foram mantidas. Tente novamente.');
-    } finally { bloqueio.current = false; setSalvando(false); }
+      setErro(
+        'Não foi possível salvar suas preferências. Suas escolhas foram mantidas. Tente novamente.',
+      );
+    } finally {
+      bloqueio.current = false;
+      setSalvando(false);
+    }
   }
 
   return (
     <main className="pagina-preferencias">
-      <header className="marca" aria-label="NutriCorp">NutriCorp</header>
+      <header className="marca" aria-label="NutriCorp">
+        NutriCorp
+      </header>
       <h1 tabIndex={-1}>Preferências e restrições alimentares</h1>
-      <p className="preferencias-introducao">Personalize seu perfil para identificar opções compatíveis no cardápio.</p>
-      {carregando ? <p role="status">Carregando preferências…</p> : !dados ? (
+      <p className="preferencias-introducao">
+        Personalize seu perfil para identificar opções compatíveis no cardápio.
+      </p>
+      {carregando ? (
+        <p role="status">Carregando preferências…</p>
+      ) : !dados ? (
         <div className="preferencias-carregamento-erro">
           <p role="alert">{erro}</p>
-          <button type="button" onClick={() => setTentativa(valor => valor + 1)}>Tentar novamente</button>
+          <button
+            type="button"
+            onClick={() => setTentativa((valor) => valor + 1)}
+          >
+            Tentar novamente
+          </button>
           <a href="#/colaborador">Voltar ao início</a>
         </div>
       ) : (
         <form onSubmit={enviar} aria-busy={salvando}>
           <fieldset className="preferencias-formulario" disabled={salvando}>
-            <legend className="visualmente-oculto">Personalização alimentar</legend>
+            <legend className="visualmente-oculto">
+              Personalização alimentar
+            </legend>
             <div className="preferencias-paineis">
-              <section className="preferencias-painel" aria-labelledby="titulo-perfis">
+              <section
+                className="preferencias-painel"
+                aria-labelledby="titulo-perfis"
+              >
                 <h2 id="titulo-perfis">Preferências alimentares</h2>
-                <p id="ajuda-perfis">Selecione o perfil que mais combina com sua alimentação.</p>
+                <p id="ajuda-perfis">
+                  Selecione o perfil que mais combina com sua alimentação.
+                </p>
                 <fieldset aria-describedby="ajuda-perfis">
-                  <legend className="visualmente-oculto">Perfil alimentar</legend>
+                  <legend className="visualmente-oculto">
+                    Perfil alimentar
+                  </legend>
                   <div className="preferencias-opcoes perfis-opcoes">
                     {perfis.map(({ valor, titulo }) => (
                       <label className="preferencias-opcao" key={valor}>
-                        <input className="visualmente-oculto" type="radio" name="perfilAlimentar"
-                          value={valor} checked={dados.perfil === valor} onChange={() => alterar({ perfil: valor })} />
+                        <input
+                          className="visualmente-oculto"
+                          type="radio"
+                          name="perfilAlimentar"
+                          value={valor}
+                          checked={dados.perfil === valor}
+                          onChange={() => alterar({ perfil: valor })}
+                        />
                         <span className="preferencias-opcao-conteudo">
-                          <span className="preferencias-marcador" aria-hidden="true">{dados.perfil === valor ? '✓' : '○'}</span>{titulo}
+                          <span
+                            className="preferencias-marcador"
+                            aria-hidden="true"
+                          >
+                            {dados.perfil === valor ? '✓' : '○'}
+                          </span>
+                          {titulo}
                         </span>
                       </label>
                     ))}
                   </div>
                 </fieldset>
-                <label className="preferencias-rotulo" htmlFor="alimentosEvitar">Alimentos que prefiro evitar</label>
-                <input id="alimentosEvitar" value={dados.alimentosEvitar} maxLength={500}
-                  placeholder="Ex.: pimentão, cebola crua" onChange={e => alterar({ alimentosEvitar: e.target.value })} />
-                <p className="preferencias-nota">Preferências não são tratadas como alergias.</p>
+                <label
+                  className="preferencias-rotulo"
+                  htmlFor="alimentosEvitar"
+                >
+                  Alimentos que prefiro evitar
+                </label>
+                <input
+                  id="alimentosEvitar"
+                  value={dados.alimentosEvitar}
+                  maxLength={500}
+                  placeholder="Ex.: pimentão, cebola crua"
+                  onChange={(e) => alterar({ alimentosEvitar: e.target.value })}
+                />
+                <p className="preferencias-nota">
+                  Preferências não são tratadas como alergias.
+                </p>
               </section>
-              <section className="preferencias-painel" aria-labelledby="titulo-restricoes">
+              <section
+                className="preferencias-painel"
+                aria-labelledby="titulo-restricoes"
+              >
                 <h2 id="titulo-restricoes">Restrições e alergias</h2>
-                <p id="ajuda-restricoes">Marque todas as opções aplicáveis ao seu perfil.</p>
+                <p id="ajuda-restricoes">
+                  Marque todas as opções aplicáveis ao seu perfil.
+                </p>
                 <fieldset aria-describedby="ajuda-restricoes">
-                  <legend className="visualmente-oculto">Restrições e alergias</legend>
+                  <legend className="visualmente-oculto">
+                    Restrições e alergias
+                  </legend>
                   <div className="preferencias-opcoes restricoes-opcoes">
                     {restricoes.map(({ valor, titulo }) => (
                       <label className="preferencias-opcao" key={valor}>
-                        <input className="visualmente-oculto" type="checkbox" name="restricoes"
-                          value={valor} checked={dados.restricoes.includes(valor)} onChange={() => alternarRestricao(valor)} />
+                        <input
+                          className="visualmente-oculto"
+                          type="checkbox"
+                          name="restricoes"
+                          value={valor}
+                          checked={dados.restricoes.includes(valor)}
+                          onChange={() => alternarRestricao(valor)}
+                        />
                         <span className="preferencias-opcao-conteudo">
-                          <span className="preferencias-marcador" aria-hidden="true">{dados.restricoes.includes(valor) ? '✓' : '○'}</span>{titulo}
+                          <span
+                            className="preferencias-marcador"
+                            aria-hidden="true"
+                          >
+                            {dados.restricoes.includes(valor) ? '✓' : '○'}
+                          </span>
+                          {titulo}
                         </span>
                       </label>
                     ))}
                   </div>
                 </fieldset>
-                <label className="preferencias-rotulo" htmlFor="outrasOrientacoes">Outras restrições ou orientações</label>
-                <input id="outrasOrientacoes" value={dados.outrasOrientacoes} maxLength={1000}
-                  placeholder="Descreva outras restrições ou orientações" onChange={e => alterar({ outrasOrientacoes: e.target.value })} />
-                <p className="preferencias-nota">Confira os ingredientes e possíveis traços antes de consumir.</p>
+                <label
+                  className="preferencias-rotulo"
+                  htmlFor="outrasOrientacoes"
+                >
+                  Outras restrições ou orientações
+                </label>
+                <input
+                  id="outrasOrientacoes"
+                  value={dados.outrasOrientacoes}
+                  maxLength={1000}
+                  placeholder="Descreva outras restrições ou orientações"
+                  onChange={(e) =>
+                    alterar({ outrasOrientacoes: e.target.value })
+                  }
+                />
+                <p className="preferencias-nota">
+                  Confira os ingredientes e possíveis traços antes de consumir.
+                </p>
               </section>
             </div>
             <footer className="preferencias-rodape">
               <p>Suas escolhas serão usadas nos alertas de compatibilidade.</p>
               <div className="preferencias-acoes">
-                <button type="button" className="preferencias-cancelar" onClick={() => { window.location.hash = '/colaborador'; }}>Cancelar</button>
-                <button type="submit" className="preferencias-salvar">{salvando ? 'Salvando…' : 'Salvar preferências'}</button>
+                <button
+                  type="button"
+                  className="preferencias-cancelar"
+                  onClick={() => {
+                    window.location.hash = '/colaborador';
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="preferencias-salvar">
+                  {salvando ? 'Salvando…' : 'Salvar preferências'}
+                </button>
               </div>
             </footer>
           </fieldset>
-          <p className="preferencias-feedback" role="status">{salvando ? 'Salvando preferências…' : aviso}</p>
-          {erro && <p className="erro-envio" role="alert">{erro}</p>}
+          <p className="preferencias-feedback" role="status">
+            {salvando ? 'Salvando preferências…' : aviso}
+          </p>
+          {erro && (
+            <p className="erro-envio" role="alert">
+              {erro}
+            </p>
+          )}
         </form>
       )}
     </main>

@@ -1,50 +1,76 @@
-import type { EntradaRegistro, OpcaoRegistro, RegistroRefeicao, TipoRefeicao } from '../types/registroRefeicao';
+import { historicoExemplo } from '../mocks/historicoRefeicoes';
+import type {
+  EntradaRegistro,
+  OpcaoRegistro,
+  RegistroRefeicao,
+  TipoRefeicao,
+} from '../types/registroRefeicao';
 import { consultarCardapios } from './cardapios';
 import { alternativaVegetariana } from '../mocks/almocoVegetariano';
 import { validarRegistro } from '../validation/registroRefeicao';
 
-// Histórico fictício para a demonstração. Nenhum registro pertence a pessoas reais.
-const exemplos: RegistroRefeicao[] = [
-  {id:'ex-1',data:'2026-11-09',registradoEm:'2026-11-09T15:15:00Z',tipo:'Almoço',nomeRefeicao:'Arroz, feijão e tofu',energia:580,observacoes:''},
-  {id:'ex-2',data:'2026-11-09',registradoEm:'2026-11-09T19:00:00Z',tipo:'Lanche',nomeRefeicao:'Banana e aveia',energia:210,observacoes:''},
-  {id:'ex-3',data:'2026-11-06',registradoEm:'2026-11-06T15:10:00Z',tipo:'Almoço',nomeRefeicao:'Arroz, lentilha e legumes',energia:540,observacoes:''},
-];
-let historico = structuredClone(exemplos);
+let historico = structuredClone(historicoExemplo);
 const requisicoes = new Map<string, RegistroRefeicao>();
-export function limparRegistrosSimulados() { historico = structuredClone(exemplos); requisicoes.clear(); }
+export function limparRegistrosSimulados() {
+  historico = structuredClone(historicoExemplo);
+  requisicoes.clear();
+}
 
+// Integrar a consulta das refeições disponíveis com o backend aqui.
 export async function consultarOpcoesRegistro(): Promise<OpcaoRegistro[]> {
-  // INTEGRAÇÃO: consultar refeições autorizadas/disponíveis para o colaborador.
   const cardapios = await consultarCardapios();
   return [
-    {id:'alternativa-tofu',tipo:'Almoço',prato:structuredClone(alternativaVegetariana)},
-    ...cardapios.flatMap(refeicao => refeicao.pratos.map(prato => ({
-      id:`${refeicao.id}:${prato.id}`,
-      tipo: (refeicao.titulo.toLowerCase().includes('lanche') ? 'Lanche' : 'Almoço') as TipoRefeicao,
-      prato,
-    }))),
+    {
+      id: 'alternativa-tofu',
+      tipo: 'Almoço',
+      prato: structuredClone(alternativaVegetariana),
+    },
+    ...cardapios.flatMap((refeicao) =>
+      refeicao.pratos.map((prato) => ({
+        id: `${refeicao.id}:${prato.id}`,
+        tipo: (refeicao.titulo.toLowerCase().includes('lanche')
+          ? 'Lanche'
+          : 'Almoço') as TipoRefeicao,
+        prato,
+      })),
+    ),
   ];
 }
-export async function consultarHistoricoRefeicoes(): Promise<RegistroRefeicao[]> {
-  // INTEGRAÇÃO: buscar somente o histórico do usuário autenticado, com paginação.
-  await new Promise<void>(resolve => window.setTimeout(resolve,300));
+// Integrar a consulta do histórico do usuário autenticado com o backend aqui.
+export async function consultarHistoricoRefeicoes(): Promise<
+  RegistroRefeicao[]
+> {
+  await new Promise<void>((resolve) => window.setTimeout(resolve, 300));
   return structuredClone(historico);
 }
-export async function registrarRefeicao(dados: EntradaRegistro): Promise<RegistroRefeicao> {
-  // INTEGRAÇÃO: POST autenticado; confirmar idempotência, IDs, erros e validação no servidor.
-  // O registro é relato de consumo, sem implicar recomendação ou autorização nutricional.
-  await new Promise<void>(resolve => window.setTimeout(resolve,650));
-  if (Object.keys(validarRegistro(dados)).length) throw new Error('Registro inválido.');
+// Integrar o registro da refeição com o backend aqui, mantendo a prevenção de envios duplicados.
+export async function registrarRefeicao(
+  dados: EntradaRegistro,
+): Promise<RegistroRefeicao> {
+  await new Promise<void>((resolve) => window.setTimeout(resolve, 650));
+  if (Object.keys(validarRegistro(dados)).length)
+    throw new Error('Registro inválido.');
   const anterior = requisicoes.get(dados.requisicaoId);
   if (anterior) return structuredClone(anterior);
-  const opcao = (await consultarOpcoesRegistro()).find(item => item.id === dados.opcaoId && item.tipo === dados.tipo);
+  const opcao = (await consultarOpcoesRegistro()).find(
+    (item) => item.id === dados.opcaoId && item.tipo === dados.tipo,
+  );
   if (!opcao) throw new Error('Refeição indisponível.');
-  const registro: RegistroRefeicao = {id:crypto.randomUUID(),data:dados.data,registradoEm:new Date().toISOString(),
-    tipo:dados.tipo,nomeRefeicao:opcao.prato.nome,observacoes:dados.observacoes.trim(),
-    energia:opcao.prato.nutricional?.nutrientes.find(item => item.unidade === 'kcal')?.quantidade ?? null};
-  // Revalidar após a espera para que a mesma chave não crie duplicidade.
+  const registro: RegistroRefeicao = {
+    id: crypto.randomUUID(),
+    data: dados.data,
+    registradoEm: new Date().toISOString(),
+    tipo: dados.tipo,
+    nomeRefeicao: opcao.prato.nome,
+    observacoes: dados.observacoes.trim(),
+    energia:
+      opcao.prato.nutricional?.nutrientes.find(
+        (item) => item.unidade === 'kcal',
+      )?.quantidade ?? null,
+  };
   const existente = requisicoes.get(dados.requisicaoId);
   if (existente) return structuredClone(existente);
-  requisicoes.set(dados.requisicaoId,registro); historico.unshift(registro);
+  requisicoes.set(dados.requisicaoId, registro);
+  historico.unshift(registro);
   return structuredClone(registro);
 }

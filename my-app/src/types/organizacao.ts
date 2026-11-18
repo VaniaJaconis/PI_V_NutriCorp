@@ -1,4 +1,3 @@
-// Contrato provisório: alinhar os nomes e limites com a API do Gabriel.
 export interface NovaOrganizacao {
   razaoSocial: string;
   cnpj: string;
@@ -7,4 +6,7 @@ export interface NovaOrganizacao {
   emailComunicacao: string;
   senha: string;
 }
-export interface ResultadoCadastroOrganizacao { id: string; modo: 'simulado' | 'api'; }
+export interface ResultadoCadastroOrganizacao {
+  id: string;
+  modo: 'simulado' | 'api';
+}

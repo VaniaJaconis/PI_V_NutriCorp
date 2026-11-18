@@ -3,7 +3,9 @@ import { CredenciaisInvalidas, entrar } from '../services/autenticacao';
 import type { ResultadoLogin } from '../types/autenticacao';
 import '../styles/login.css';
 
-interface Props { onEntrar: (resultado: ResultadoLogin) => void; }
+interface Props {
+  onEntrar: (resultado: ResultadoLogin) => void;
+}
 export default function Login({ onEntrar }: Props) {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
@@ -12,62 +14,154 @@ export default function Login({ onEntrar }: Props) {
   const [erroEnvio, setErroEnvio] = useState('');
   const bloqueio = useRef(false);
   const ativo = useRef(true);
-  useEffect(() => { ativo.current = true; return () => { ativo.current = false; }; }, []);
-  useEffect(() => { if (erroEnvio && !enviando) document.getElementById('login-senha')?.focus(); }, [erroEnvio, enviando]);
+  useEffect(() => {
+    ativo.current = true;
+    return () => {
+      ativo.current = false;
+    };
+  }, []);
+  useEffect(() => {
+    if (erroEnvio && !enviando) document.getElementById('login-senha')?.focus();
+  }, [erroEnvio, enviando]);
 
   async function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     if (bloqueio.current) return;
-    const novosErros = { usuario: !usuario.trim() ? 'Informe seu usuário.' : undefined,
-      senha: !senha ? 'Informe sua senha.' : undefined };
-    setErros(novosErros); setErroEnvio('');
+    const novosErros = {
+      usuario: !usuario.trim() ? 'Informe seu usuário.' : undefined,
+      senha: !senha ? 'Informe sua senha.' : undefined,
+    };
+    setErros(novosErros);
+    setErroEnvio('');
     if (novosErros.usuario || novosErros.senha) {
-      document.getElementById(novosErros.usuario ? 'login-usuario' : 'login-senha')?.focus(); return;
+      document
+        .getElementById(novosErros.usuario ? 'login-usuario' : 'login-senha')
+        ?.focus();
+      return;
     }
-    bloqueio.current = true; setEnviando(true);
+    bloqueio.current = true;
+    setEnviando(true);
     try {
       const resultado = await entrar({ usuario: usuario.trim(), senha });
       if (!ativo.current) return;
-      setSenha(''); onEntrar(resultado);
+      setSenha('');
+      onEntrar(resultado);
     } catch (erro) {
       if (!ativo.current) return;
-      setErroEnvio(erro instanceof CredenciaisInvalidas
-        ? 'Usuário ou senha inválidos.' : 'Não foi possível entrar. Tente novamente.');
+      setErroEnvio(
+        erro instanceof CredenciaisInvalidas
+          ? 'Usuário ou senha inválidos.'
+          : 'Não foi possível entrar. Tente novamente.',
+      );
       setSenha('');
-    } finally { bloqueio.current = false; if (ativo.current) setEnviando(false); }
+    } finally {
+      bloqueio.current = false;
+      if (ativo.current) setEnviando(false);
+    }
   }
 
   return (
     <main className="pagina-login">
-      <header className="marca" aria-label="NutriCorp">NutriCorp</header>
+      <header className="marca" aria-label="NutriCorp">
+        NutriCorp
+      </header>
       <h1 tabIndex={-1}>Login</h1>
       <form noValidate onSubmit={enviar} aria-busy={enviando}>
         <fieldset disabled={enviando}>
           <legend className="visualmente-oculto">Dados de acesso</legend>
           <div className="campo">
-            <label className="visualmente-oculto" htmlFor="login-usuario">Usuário</label>
-            <input id="login-usuario" name="usuario" placeholder="Usuário" autoComplete="username" required
-              maxLength={200} value={usuario} aria-invalid={Boolean(erros.usuario)}
-              aria-describedby={erros.usuario ? 'login-usuario-erro' : undefined}
-              onChange={e => { setUsuario(e.target.value); setErros(anterior => ({ ...anterior, usuario: undefined })); setErroEnvio(''); }} />
-            {erros.usuario && <span className="erro-campo" id="login-usuario-erro">{erros.usuario}</span>}
+            <label className="visualmente-oculto" htmlFor="login-usuario">
+              Usuário
+            </label>
+            <input
+              id="login-usuario"
+              name="usuario"
+              placeholder="Usuário"
+              autoComplete="username"
+              required
+              maxLength={200}
+              value={usuario}
+              aria-invalid={Boolean(erros.usuario)}
+              aria-describedby={
+                erros.usuario ? 'login-usuario-erro' : undefined
+              }
+              onChange={(e) => {
+                setUsuario(e.target.value);
+                setErros((anterior) => ({ ...anterior, usuario: undefined }));
+                setErroEnvio('');
+              }}
+            />
+            {erros.usuario && (
+              <span className="erro-campo" id="login-usuario-erro">
+                {erros.usuario}
+              </span>
+            )}
           </div>
           <div className="campo">
-            <label className="visualmente-oculto" htmlFor="login-senha">Senha</label>
-            <input id="login-senha" name="senha" type="password" placeholder="Senha" autoComplete="current-password" required
-              maxLength={128} value={senha} aria-invalid={Boolean(erros.senha)}
+            <label className="visualmente-oculto" htmlFor="login-senha">
+              Senha
+            </label>
+            <input
+              id="login-senha"
+              name="senha"
+              type="password"
+              placeholder="Senha"
+              autoComplete="current-password"
+              required
+              maxLength={128}
+              value={senha}
+              aria-invalid={Boolean(erros.senha)}
               aria-describedby={erros.senha ? 'login-senha-erro' : undefined}
-              onChange={e => { setSenha(e.target.value); setErros(anterior => ({ ...anterior, senha: undefined })); setErroEnvio(''); }} />
-            {erros.senha && <span className="erro-campo" id="login-senha-erro">{erros.senha}</span>}
+              onChange={(e) => {
+                setSenha(e.target.value);
+                setErros((anterior) => ({ ...anterior, senha: undefined }));
+                setErroEnvio('');
+              }}
+            />
+            {erros.senha && (
+              <span className="erro-campo" id="login-senha-erro">
+                {erros.senha}
+              </span>
+            )}
           </div>
-          <button className="login-entrar" type="submit">{enviando ? 'Entrando…' : 'Entrar'}</button>
+          <button className="login-entrar" type="submit">
+            {enviando ? 'Entrando…' : 'Entrar'}
+          </button>
         </fieldset>
-        <span className="visualmente-oculto" role="status">{enviando ? 'Verificando acesso.' : ''}</span>
-        {erroEnvio && <p className="erro-envio" role="alert">{erroEnvio}</p>}
+        <span className="visualmente-oculto" role="status">
+          {enviando ? 'Verificando acesso.' : ''}
+        </span>
+        {erroEnvio && (
+          <p className="erro-envio" role="alert">
+            {erroEnvio}
+          </p>
+        )}
       </form>
       <nav className="login-cadastros" aria-label="Opções de cadastro">
-        <a href="#/cadastro" aria-disabled={enviando} tabIndex={enviando ? -1 : undefined} onClick={e => { if (enviando) e.preventDefault(); }}>Cadastrar<br />usuário</a>
-        <a href="#/organizacao/cadastro" aria-disabled={enviando} tabIndex={enviando ? -1 : undefined} onClick={e => { if (enviando) e.preventDefault(); }}>Cadastrar<br />Organização</a>
+        <a
+          href="#/cadastro"
+          aria-disabled={enviando}
+          tabIndex={enviando ? -1 : undefined}
+          onClick={(e) => {
+            if (enviando) e.preventDefault();
+          }}
+        >
+          Cadastrar
+          <br />
+          usuário
+        </a>
+        <a
+          href="#/organizacao/cadastro"
+          aria-disabled={enviando}
+          tabIndex={enviando ? -1 : undefined}
+          onClick={(e) => {
+            if (enviando) e.preventDefault();
+          }}
+        >
+          Cadastrar
+          <br />
+          Organização
+        </a>
       </nav>
     </main>
   );

@@ -1,8 +1,38 @@
-.cadastro.cadastro-organizacao { max-width: 498px; padding-top: 48px; }
-.cadastro-organizacao .marca { font-size: clamp(48px, 16vw, 80px); line-height: 1.2; margin-bottom: 20px; }
-.cadastro-organizacao .cadastro-conteudo { max-width: 244px; }
-.cadastro-organizacao h1 { font-size: 18px; line-height: 22px; margin-bottom: 14px; }
-.cadastro-organizacao .campo { margin-bottom: 12px; }
-.cadastro-organizacao input { height: 41px; border-radius: 9px; font-size: 14px; padding-inline: 12px; }
-.cadastro-organizacao .criar { min-height: 41px; margin-top: 6px; padding: 8px 12px; border-radius: 9px; font-size: 18px; }
-@media (max-width: 360px) { .cadastro.cadastro-organizacao { padding-top: 32px; } }
+.cadastro.cadastro-organizacao {
+  max-width: 498px;
+  padding-top: 48px;
+}
+.cadastro-organizacao .marca {
+  font-size: clamp(48px, 16vw, 80px);
+  line-height: 1.2;
+  margin-bottom: 20px;
+}
+.cadastro-organizacao .cadastro-conteudo {
+  max-width: 244px;
+}
+.cadastro-organizacao h1 {
+  font-size: 18px;
+  line-height: 22px;
+  margin-bottom: 14px;
+}
+.cadastro-organizacao .campo {
+  margin-bottom: 12px;
+}
+.cadastro-organizacao input {
+  height: 41px;
+  border-radius: 9px;
+  font-size: 14px;
+  padding-inline: 12px;
+}
+.cadastro-organizacao .criar {
+  min-height: 41px;
+  margin-top: 6px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  font-size: 18px;
+}
+@media (max-width: 360px) {
+  .cadastro.cadastro-organizacao {
+    padding-top: 32px;
+  }
+}

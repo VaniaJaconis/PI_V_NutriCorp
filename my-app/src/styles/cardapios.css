@@ -1,40 +1,191 @@
-.pagina-cardapios { position: relative; max-width: 1200px; margin: 0 auto; padding: 12px 48px 32px; }
-.pagina-cardapios .marca { font-size: 40px; line-height: 1.2; margin: 0 0 20px; }
-.cardapios-voltar { position: absolute; top: 10px; left: 10px; display: inline-flex; padding: 6px; color: #242424; border-radius: 50%; }
-.cardapios-voltar:focus-visible { outline: 3px solid #40782b; outline-offset: 2px; }
-.cardapios-demonstracao { font-size: 12px; color: #60675c; text-align: center; margin: 0 0 22px; }
-.cardapios-colunas { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
-.cardapios-colunas section { min-width: 0; }
-.cardapios-colunas h2 { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; min-width: 110px; max-width: 100%; padding: 8px 14px; margin: 0 0 8px; background: #484848; color: #fff; border-radius: 10px; font-size: 12px; font-weight: 500; line-height: 1.4; }
-.cardapios-painel { min-height: 280px; padding: 12px 8px; background: #d9d9d9; border-radius: 8px; }
-.cardapios-lista { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
-.cardapios-lista button { width: 100%; min-height: 32px; padding: 6px 12px; background: #fff; color: #242424; border-radius: 16px; font-size: 12px; font-weight: 400; line-height: 1.4; text-align: left; overflow-wrap: anywhere; }
-.cardapios-lista button[aria-pressed='true'] { background: var(--verde); color: #fff; }
-.cardapios-lista button:hover { box-shadow: inset 0 0 0 2px #40782b; }
-.cardapios-ingredientes li { background: #fff; color: #242424; padding: 6px 12px; border-radius: 16px; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
-.cardapios-nutricao { padding: 12px; background: #fff; border: 1px solid #999; border-radius: 0; }
-.cardapios-nutricao table { width: 100%; border-collapse: collapse; font-size: 12px; line-height: 1.4; }
-.cardapios-nutricao caption { font-weight: 750; text-align: left; margin-bottom: 12px; }
-.cardapios-nutricao th, .cardapios-nutricao td { border-bottom: 1px solid #d9d9d9; padding: 7px 3px; text-align: left; overflow-wrap: anywhere; }
-.cardapios-nutricao th { font-weight: 600; }
-.cardapios-nutricao td, .cardapios-nutricao thead th:last-child { text-align: right; }
-.cardapios-vazio { font-size: 13px; line-height: 1.6; margin: 4px; }
-.cardapios-compatibilidade { margin-top: 24px; font-size: 14px; line-height: 1.6; }
-.cardapios-compatibilidade:empty { display: none; }
-.cardapios-compatibilidade h2 { font-size: 16px; margin: 0 0 8px; }
-.cardapios-alertas { color: #8c311d; }
-.cardapios-nota { font-size: 12px; color: #60675c; }
-.cardapios-erro { max-width: 480px; line-height: 1.6; }
+.pagina-cardapios {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 48px 32px;
+}
+.pagina-cardapios .marca {
+  font-size: 40px;
+  line-height: 1.2;
+  margin: 0 0 20px;
+}
+.cardapios-voltar {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  padding: 6px;
+  color: #242424;
+  border-radius: 50%;
+}
+.cardapios-voltar:focus-visible {
+  outline: 3px solid #40782b;
+  outline-offset: 2px;
+}
+.cardapios-demonstracao {
+  font-size: 12px;
+  color: #60675c;
+  text-align: center;
+  margin: 0 0 22px;
+}
+.cardapios-colunas {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+}
+.cardapios-colunas section {
+  min-width: 0;
+}
+.cardapios-colunas h2 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  min-width: 110px;
+  max-width: 100%;
+  padding: 8px 14px;
+  margin: 0 0 8px;
+  background: #484848;
+  color: #fff;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.cardapios-painel {
+  min-height: 280px;
+  padding: 12px 8px;
+  background: #d9d9d9;
+  border-radius: 8px;
+}
+.cardapios-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cardapios-lista button {
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 12px;
+  background: #fff;
+  color: #242424;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.cardapios-lista button[aria-pressed='true'] {
+  background: var(--verde);
+  color: #fff;
+}
+.cardapios-lista button:hover {
+  box-shadow: inset 0 0 0 2px #40782b;
+}
+.cardapios-ingredientes li {
+  background: #fff;
+  color: #242424;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.cardapios-nutricao {
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #999;
+  border-radius: 0;
+}
+.cardapios-nutricao table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.cardapios-nutricao caption {
+  font-weight: 750;
+  text-align: left;
+  margin-bottom: 12px;
+}
+.cardapios-nutricao th,
+.cardapios-nutricao td {
+  border-bottom: 1px solid #d9d9d9;
+  padding: 7px 3px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.cardapios-nutricao th {
+  font-weight: 600;
+}
+.cardapios-nutricao td,
+.cardapios-nutricao thead th:last-child {
+  text-align: right;
+}
+.cardapios-vazio {
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 4px;
+}
+.cardapios-compatibilidade {
+  margin-top: 24px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.cardapios-compatibilidade:empty {
+  display: none;
+}
+.cardapios-compatibilidade h2 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+.cardapios-alertas {
+  color: #8c311d;
+}
+.cardapios-nota {
+  font-size: 12px;
+  color: #60675c;
+}
+.cardapios-erro {
+  max-width: 480px;
+  line-height: 1.6;
+}
 @media (max-width: 760px) {
-  .pagina-cardapios { padding-inline: 24px; }
-  .cardapios-colunas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pagina-cardapios {
+    padding-inline: 24px;
+  }
+  .cardapios-colunas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (max-width: 520px) {
-  .pagina-cardapios { padding: 20px 16px 32px; }
-  .pagina-cardapios .marca { font-size: 36px; }
-  .cardapios-colunas { grid-template-columns: 1fr; gap: 20px; }
-  .cardapios-painel { min-height: 100px; }
-  .cardapios-lista button, .cardapios-ingredientes li { min-height: 44px; padding: 12px; font-size: 14px; }
-  .cardapios-colunas h2 { font-size: 14px; }
-  .cardapios-nutricao table { font-size: 14px; }
+  .pagina-cardapios {
+    padding: 20px 16px 32px;
+  }
+  .pagina-cardapios .marca {
+    font-size: 36px;
+  }
+  .cardapios-colunas {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .cardapios-painel {
+    min-height: 100px;
+  }
+  .cardapios-lista button,
+  .cardapios-ingredientes li {
+    min-height: 44px;
+    padding: 12px;
+    font-size: 14px;
+  }
+  .cardapios-colunas h2 {
+    font-size: 14px;
+  }
+  .cardapios-nutricao table {
+    font-size: 14px;
+  }
 }

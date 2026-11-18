@@ -24,9 +24,10 @@ function rotaAtual() {
 export default function App() {
   const [rota, setRota] = useState(rotaAtual);
   const caminho = rota.split('?')[0];
-  const refeicaoId = new URLSearchParams(rota.split('?')[1]).get('refeicao') || 'terca-vegetariano';
-  // Apenas nome de exibição em memória para o protótipo. Não representa autenticação.
-  // INTEGRAÇÃO: obter a identidade da sessão validada pela API quando disponível.
+  const refeicaoId =
+    new URLSearchParams(rota.split('?')[1]).get('refeicao') ||
+    'terca-vegetariano';
+  // Obter o nome e o perfil da sessão retornada pelo backend.
   const [nome, setNome] = useState('');
   const [nomeOrganizacao, setNomeOrganizacao] = useState('');
 
@@ -56,42 +57,80 @@ export default function App() {
     document.querySelector<HTMLElement>('h1')?.focus();
   }, [rota, caminho]);
 
-  if (caminho === '/login' || caminho === '/') return <Login onEntrar={resultado => {
-    limparRegistrosSimulados();
-    limparCardapioOrganizacaoSimulado();
-    limparPreferenciasSimuladas();
-    limparSelecoesSimuladas();
-    setNome(''); setNomeOrganizacao('');
-    if (resultado.perfil === 'colaborador') {
-      setNome(resultado.nome); window.location.hash = '/colaborador';
-    } else {
-      setNomeOrganizacao(resultado.nome); window.location.hash = '/organizacao';
-    }
-  }} />;
-  if (caminho === '/organizacao') return <InicioOrganizacao nome={nomeOrganizacao} />;
-  if (caminho === '/organizacao/acessos') return <OrganizacaoPendente titulo="Controle de Acesso" />;
-  if (caminho === '/organizacao/cardapios') return <CadastroCardapio nomeOrganizacao={nomeOrganizacao} />;
-  if (caminho === '/organizacao/indicadores') return <OrganizacaoPendente titulo="Indicadores" />;
-  if (caminho === '/organizacao/cadastro') return <CadastroOrganizacao onCadastroConcluido={nomeFantasia => {
-    limparRegistrosSimulados();
-    limparCardapioOrganizacaoSimulado();
-    limparPreferenciasSimuladas(); limparSelecoesSimuladas(); setNome('');
-    setNomeOrganizacao(nomeFantasia); window.location.hash = '/organizacao';
-  }} />;
-  if (caminho === '/cadastro') return (
-    <CadastroColaborador onCadastroConcluido={(nomeCompleto) => {
-      limparRegistrosSimulados();
-      limparCardapioOrganizacaoSimulado();
-      limparPreferenciasSimuladas();
-      limparSelecoesSimuladas();
-      setNome(nomeCompleto);
-      window.location.hash = '/colaborador';
-    }} />
-  );
+  if (caminho === '/login' || caminho === '/')
+    return (
+      <Login
+        onEntrar={(resultado) => {
+          limparRegistrosSimulados();
+          limparCardapioOrganizacaoSimulado();
+          limparPreferenciasSimuladas();
+          limparSelecoesSimuladas();
+          setNome('');
+          setNomeOrganizacao('');
+          if (resultado.perfil === 'colaborador') {
+            setNome(resultado.nome);
+            window.location.hash = '/colaborador';
+          } else {
+            setNomeOrganizacao(resultado.nome);
+            window.location.hash = '/organizacao';
+          }
+        }}
+      />
+    );
+  if (caminho === '/organizacao')
+    return <InicioOrganizacao nome={nomeOrganizacao} />;
+  if (caminho === '/organizacao/acessos')
+    return <OrganizacaoPendente titulo="Controle de Acesso" />;
+  if (caminho === '/organizacao/cardapios')
+    return <CadastroCardapio nomeOrganizacao={nomeOrganizacao} />;
+  if (caminho === '/organizacao/indicadores')
+    return <OrganizacaoPendente titulo="Indicadores" />;
+  if (caminho === '/organizacao/cadastro')
+    return (
+      <CadastroOrganizacao
+        onCadastroConcluido={(nomeFantasia) => {
+          limparRegistrosSimulados();
+          limparCardapioOrganizacaoSimulado();
+          limparPreferenciasSimuladas();
+          limparSelecoesSimuladas();
+          setNome('');
+          setNomeOrganizacao(nomeFantasia);
+          window.location.hash = '/organizacao';
+        }}
+      />
+    );
+  if (caminho === '/cadastro')
+    return (
+      <CadastroColaborador
+        onCadastroConcluido={(nomeCompleto) => {
+          limparRegistrosSimulados();
+          limparCardapioOrganizacaoSimulado();
+          limparPreferenciasSimuladas();
+          limparSelecoesSimuladas();
+          setNome(nomeCompleto);
+          window.location.hash = '/colaborador';
+        }}
+      />
+    );
   if (caminho === '/colaborador') return <InicioColaborador nome={nome} />;
-  if (caminho === '/colaborador/preferencias') return <PreferenciasColaborador />;
+  if (caminho === '/colaborador/preferencias')
+    return <PreferenciasColaborador />;
   if (caminho === '/colaborador/cardapios') return <CardapiosColaborador />;
-  if (caminho === '/colaborador/refeicoes') return <RegistroRefeicoes key={rota} opcaoInicial={new URLSearchParams(rota.split('?')[1]).get('opcao') ?? ''} />;
-  if (caminho === '/colaborador/compatibilidade') return <CompatibilidadeRefeicao key={refeicaoId} refeicaoId={refeicaoId} />;
-  return <TelaPendente titulo="Página não encontrada" mensagem="Não encontramos a página solicitada." />;
+  if (caminho === '/colaborador/refeicoes')
+    return (
+      <RegistroRefeicoes
+        key={rota}
+        opcaoInicial={
+          new URLSearchParams(rota.split('?')[1]).get('opcao') ?? ''
+        }
+      />
+    );
+  if (caminho === '/colaborador/compatibilidade')
+    return <CompatibilidadeRefeicao key={refeicaoId} refeicaoId={refeicaoId} />;
+  return (
+    <TelaPendente
+      titulo="Página não encontrada"
+      mensagem="Não encontramos a página solicitada."
+    />
+  );
 }
