@@ -18,7 +18,11 @@ const campos = [
   { nome: 'senha', titulo: 'Senha', autocomplete: 'new-password' },
 ] as const;
 
-export default function CadastroColaborador() {
+interface Props {
+  onCadastroConcluido?: (nomeCompleto: string) => void;
+}
+
+export default function CadastroColaborador({ onCadastroConcluido }: Props) {
   const [dados, setDados] = useState<NovoColaborador>(vazio);
   const [erros, setErros] = useState<ErrosCadastro>({});
   const [estado, setEstado] = useState<'inicial' | 'enviando' | 'sucesso' | 'erro'>('inicial');
@@ -51,9 +55,9 @@ export default function CadastroColaborador() {
       setDados(vazio);
       setEstado('sucesso');
       setMensagem(resultado.modo === 'simulado'
-        ? 'Simulação concluída. Nenhuma conta foi criada ou informação salva.'
+        ? 'Deu certo.'
         : 'Cadastro realizado com sucesso.');
-      // NAVEGAÇÃO: conectar a próxima etapa quando a tela 2 estiver definida.
+      onCadastroConcluido?.(dados.nomeCompleto.trim());
     } catch {
       setEstado('erro');
       setMensagem('Não foi possível concluir o cadastro. Tente novamente.');
@@ -64,7 +68,7 @@ export default function CadastroColaborador() {
     <main className="cadastro">
       <header className="marca" aria-label="NutriCorp">NutriCorp</header>
       <section className="cadastro-conteudo" aria-labelledby="titulo-cadastro">
-        <h1 id="titulo-cadastro">Cadastro</h1>
+        <h1 id="titulo-cadastro" tabIndex={-1}>Cadastro</h1>
         {estado === 'sucesso' ? (
           <div className="sucesso" role="status">
             <p>{mensagem}</p>

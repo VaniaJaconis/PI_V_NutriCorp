@@ -1,0 +1,32 @@
+.inicio-colaborador {
+  width: 100%; max-width: 824px; margin: 0 auto;
+  padding: 29px 45px 80px 16px;
+}
+.inicio-colaborador .marca { margin: 0 0 70px; }
+.inicio-colaborador .saudacao-colaborador {
+  font-size: 16px; line-height: 24px; font-weight: 750;
+  margin: 0 0 24px; overflow-wrap: anywhere;
+}
+h1[tabindex='-1']:focus { outline: none; }
+.menu-colaborador {
+  display: flex; align-items: center; justify-content: center; gap: 34px;
+  background: #d9d9d9; border-radius: 110px; min-height: 208px;
+  padding: 40px;
+}
+.acao-colaborador {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--verde); color: #fff; border-radius: 20px;
+  min-height: 73px; width: 250px; max-width: 100%; padding: 16px;
+  font: inherit; font-size: 16px; font-weight: 600; line-height: 1.4;
+  text-align: center; text-decoration: none;
+}
+.acao-colaborador:hover { background: #124100; }
+.acao-colaborador:focus-visible { outline: 3px solid #40782b; outline-offset: 4px; }
+.tela-pendente { max-width: 824px; padding: 29px 24px 64px; margin: 0 auto; text-align: center; }
+.tela-pendente p { line-height: 1.6; margin: 24px 0; }
+@media (max-width: 600px) {
+  .inicio-colaborador { padding: 26px 16px 48px; }
+  .inicio-colaborador .marca { margin-bottom: 50px; }
+  .menu-colaborador { flex-direction: column; gap: 20px; padding: 32px 24px; border-radius: 48px; }
+  .acao-colaborador { width: 100%; max-width: 300px; }
+}
