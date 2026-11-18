@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import CadastroColaborador from './pages/CadastroColaborador';
 import InicioColaborador from './pages/InicioColaborador';
 import TelaPendente from './pages/TelaPendente';
+import PreferenciasColaborador from './pages/PreferenciasColaborador';
+import { limparPreferenciasSimuladas } from './services/preferencias';
 import './styles/colaborador.css';
 
 function rotaAtual() {
@@ -33,12 +35,13 @@ export default function App() {
 
   if (rota === '/cadastro') return (
     <CadastroColaborador onCadastroConcluido={(nomeCompleto) => {
+      limparPreferenciasSimuladas();
       setNome(nomeCompleto);
       window.location.hash = '/colaborador';
     }} />
   );
   if (rota === '/colaborador') return <InicioColaborador nome={nome} />;
-  if (rota === '/colaborador/preferencias') return <TelaPendente titulo="Preferência e Restrições" />;
+  if (rota === '/colaborador/preferencias') return <PreferenciasColaborador />;
   if (rota === '/colaborador/cardapios') return <TelaPendente titulo="Cardápios" />;
   return <TelaPendente titulo="Página não encontrada" mensagem="Não encontramos a página solicitada." />;
 }
