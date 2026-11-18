@@ -1,20 +1,29 @@
 import { useEffect, useState } from 'react';
 import CadastroColaborador from './pages/CadastroColaborador';
+import CadastroOrganizacao from './pages/CadastroOrganizacao';
+import Login from './pages/Login';
+import InicioOrganizacao from './pages/InicioOrganizacao';
 import InicioColaborador from './pages/InicioColaborador';
 import TelaPendente from './pages/TelaPendente';
 import PreferenciasColaborador from './pages/PreferenciasColaborador';
+import CardapiosColaborador from './pages/CardapiosColaborador';
+import CompatibilidadeRefeicao from './pages/CompatibilidadeRefeicao';
+import { limparSelecoesSimuladas } from './services/alternativas';
 import { limparPreferenciasSimuladas } from './services/preferencias';
 import './styles/colaborador.css';
 
 function rotaAtual() {
-  return window.location.hash.slice(1) || '/cadastro';
+  return window.location.hash.slice(1) || '/login';
 }
 
 export default function App() {
   const [rota, setRota] = useState(rotaAtual);
+  const caminho = rota.split('?')[0];
+  const refeicaoId = new URLSearchParams(rota.split('?')[1]).get('refeicao') || 'terca-vegetariano';
   // Apenas nome de exibição em memória para o protótipo. Não representa autenticação.
   // INTEGRAÇÃO: obter a identidade da sessão validada pela API quando disponível.
   const [nome, setNome] = useState('');
+  const [nomeOrganizacao, setNomeOrganizacao] = useState('');
 
   useEffect(() => {
     const atualizar = () => setRota(rotaAtual());
@@ -24,24 +33,43 @@ export default function App() {
 
   useEffect(() => {
     const titulos: Record<string, string> = {
+      '/': 'Login',
+      '/login': 'Login',
+      '/organizacao': 'Área da organização',
       '/cadastro': 'Cadastro do colaborador',
+      '/organizacao/cadastro': 'Cadastro da organização',
       '/colaborador': 'Início do colaborador',
       '/colaborador/preferencias': 'Preferência e Restrições',
       '/colaborador/cardapios': 'Cardápios',
+      '/colaborador/compatibilidade': 'Compatibilidade das refeições',
     };
-    document.title = `${titulos[rota] ?? 'Página não encontrada'} | NutriCorp`;
+    document.title = `${titulos[caminho] ?? 'Página não encontrada'} | NutriCorp`;
     document.querySelector<HTMLElement>('h1')?.focus();
-  }, [rota]);
+  }, [rota, caminho]);
 
-  if (rota === '/cadastro') return (
+  if (caminho === '/login' || caminho === '/') return <Login onEntrar={resultado => {
+    limparPreferenciasSimuladas();
+    limparSelecoesSimuladas();
+    setNome(''); setNomeOrganizacao('');
+    if (resultado.perfil === 'colaborador') {
+      setNome(resultado.nome); window.location.hash = '/colaborador';
+    } else {
+      setNomeOrganizacao(resultado.nome); window.location.hash = '/organizacao';
+    }
+  }} />;
+  if (caminho === '/organizacao') return <InicioOrganizacao nome={nomeOrganizacao} />;
+  if (caminho === '/organizacao/cadastro') return <CadastroOrganizacao />;
+  if (caminho === '/cadastro') return (
     <CadastroColaborador onCadastroConcluido={(nomeCompleto) => {
       limparPreferenciasSimuladas();
+      limparSelecoesSimuladas();
       setNome(nomeCompleto);
       window.location.hash = '/colaborador';
     }} />
   );
-  if (rota === '/colaborador') return <InicioColaborador nome={nome} />;
-  if (rota === '/colaborador/preferencias') return <PreferenciasColaborador />;
-  if (rota === '/colaborador/cardapios') return <TelaPendente titulo="Cardápios" />;
+  if (caminho === '/colaborador') return <InicioColaborador nome={nome} />;
+  if (caminho === '/colaborador/preferencias') return <PreferenciasColaborador />;
+  if (caminho === '/colaborador/cardapios') return <CardapiosColaborador />;
+  if (caminho === '/colaborador/compatibilidade') return <CompatibilidadeRefeicao key={refeicaoId} refeicaoId={refeicaoId} />;
   return <TelaPendente titulo="Página não encontrada" mensagem="Não encontramos a página solicitada." />;
 }

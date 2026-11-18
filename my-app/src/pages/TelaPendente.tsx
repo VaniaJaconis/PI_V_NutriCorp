@@ -3,7 +3,7 @@ interface Props {
   mensagem?: string;
 }
 
-// Destino provisório para manter os links funcionais até receber as próximas telas.
+
 export default function TelaPendente({ titulo, mensagem = 'Esta tela estará disponível em breve.' }: Props) {
   return (
     <main className="tela-pendente">
