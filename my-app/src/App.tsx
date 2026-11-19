@@ -12,10 +12,12 @@ import { limparRegistrosSimulados } from './services/registrosRefeicoes';
 import TelaPendente from './pages/TelaPendente';
 import PreferenciasColaborador from './pages/PreferenciasColaborador';
 import CardapiosColaborador from './pages/CardapiosColaborador';
+import CardapiosOrganizacao from './pages/CardapiosOrganizacao';
 import CompatibilidadeRefeicao from './pages/CompatibilidadeRefeicao';
 import { limparSelecoesSimuladas } from './services/alternativas';
 import { limparPreferenciasSimuladas } from './services/preferencias';
 import './styles/colaborador.css';
+import Indicadores from './pages/Indicadores';
 
 function rotaAtual() {
   return window.location.hash.slice(1) || '/login';
@@ -82,9 +84,9 @@ export default function App() {
   if (caminho === '/organizacao/acessos')
     return <OrganizacaoPendente titulo="Controle de Acesso" />;
   if (caminho === '/organizacao/cardapios')
-    return <CadastroCardapio nomeOrganizacao={nomeOrganizacao} />;
+    return <CardapiosOrganizacao />;
   if (caminho === '/organizacao/indicadores')
-    return <OrganizacaoPendente titulo="Indicadores" />;
+    return <Indicadores />;
   if (caminho === '/organizacao/cadastro')
     return (
       <CadastroOrganizacao
