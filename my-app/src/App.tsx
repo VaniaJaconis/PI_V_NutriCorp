@@ -3,6 +3,7 @@ import CadastroColaborador from './pages/CadastroColaborador';
 import CadastroOrganizacao from './pages/CadastroOrganizacao';
 import Login from './pages/Login';
 import InicioOrganizacao from './pages/InicioOrganizacao';
+import ControleAcesso from './pages/ControleAcesso';
 import CadastroCardapio from './pages/CadastroCardapio';
 import { limparCardapioOrganizacaoSimulado } from './services/cardapiosOrganizacao';
 import InicioColaborador from './pages/InicioColaborador';
@@ -15,6 +16,7 @@ import CardapiosOrganizacao from './pages/CardapiosOrganizacao';
 import CompatibilidadeRefeicao from './pages/CompatibilidadeRefeicao';
 import { limparSelecoesSimuladas } from './services/alternativas';
 import { limparPreferenciasSimuladas } from './services/preferencias';
+import { limparAcessosSimulados } from './services/controleAcesso';
 import Indicadores from './pages/Indicadores';
 
 function rotaAtual() {
@@ -66,6 +68,7 @@ export default function App() {
           limparCardapioOrganizacaoSimulado();
           limparPreferenciasSimuladas();
           limparSelecoesSimuladas();
+          limparAcessosSimulados();
           setNome('');
           setNomeOrganizacao('');
           if (resultado.perfil === 'colaborador') {
@@ -80,6 +83,8 @@ export default function App() {
     );
   if (caminho === '/organizacao')
     return <InicioOrganizacao nome={nomeOrganizacao} />;
+  if (caminho === '/organizacao/acessos')
+    return <ControleAcesso nome={nomeOrganizacao} />;
   if (caminho === '/organizacao/cardapios')
     return <CardapiosOrganizacao />;
   if (caminho === '/organizacao/cardapios/cadastro')
