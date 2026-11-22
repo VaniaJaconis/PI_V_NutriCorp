@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 import { consultarCardapios } from '../services/cardapios';
-import { consultarPreferencias } from '../services/preferencias';
-import { avaliarCompatibilidade } from '../validation/compatibilidade';
 import type { Refeicao } from '../types/cardapio';
-import type { PreferenciasColaborador } from '../types/preferencias';
 import '../styles/cardapios.css';
 
 export default function CardapiosColaborador() {
@@ -11,8 +8,6 @@ export default function CardapiosColaborador() {
     window.location.hash.split('?')[1],
   ).get('refeicao');
   const [refeicoes, setRefeicoes] = useState<Refeicao[]>([]);
-  const [preferencias, setPreferencias] =
-    useState<PreferenciasColaborador | null>(null);
   const [refeicaoId, setRefeicaoId] = useState('');
   const [pratoId, setPratoId] = useState('');
   const [carregando, setCarregando] = useState(true);
@@ -23,11 +18,10 @@ export default function CardapiosColaborador() {
     let ativo = true;
     setCarregando(true);
     setErro('');
-    Promise.all([consultarCardapios(), consultarPreferencias()])
-      .then(([lista, perfil]) => {
+    consultarCardapios()
+      .then((lista) => {
         if (!ativo) return;
         setRefeicoes(lista);
-        setPreferencias(perfil);
         const inicial =
           lista.find((item) => item.id === refeicaoInicialId) ?? lista[0];
         setRefeicaoId(inicial?.id ?? '');
@@ -36,7 +30,7 @@ export default function CardapiosColaborador() {
       .catch(() => {
         if (ativo)
           setErro(
-            'Não foi possível carregar os cardápios e suas preferências. Tente novamente.',
+            'Não foi possível carregar os cardápios. Tente novamente.',
           );
       })
       .finally(() => {
@@ -49,8 +43,7 @@ export default function CardapiosColaborador() {
 
   const refeicao = refeicoes.find((item) => item.id === refeicaoId);
   const prato = refeicao?.pratos.find((item) => item.id === pratoId);
-  const compatibilidade =
-    prato && preferencias ? avaliarCompatibilidade(prato, preferencias) : null;
+  const compatibilidade = refeicao?.avaliacoes?.find((item) => item.pratoId === prato?.id);
 
   return (
     <main className="pagina-cardapios">
@@ -78,9 +71,6 @@ export default function CardapiosColaborador() {
       <h1 className="visualmente-oculto" tabIndex={-1}>
         Cardápios
       </h1>
-      <p className="cardapios-demonstracao">
-        Cardápio e valores nutricionais demonstrativos.
-      </p>
       {carregando ? (
         <p role="status">Carregando cardápios…</p>
       ) : erro ? (
@@ -244,10 +234,9 @@ export default function CardapiosColaborador() {
                   )
                 )}
                 <p className="cardapios-nota">
-                  Os alertas consideram o perfil e as restrições marcadas.
-                  Alimentos a evitar e orientações em texto livre precisam ser
-                  confirmados com o serviço de alimentação. Confira ingredientes
-                  e possíveis traços antes de consumir.
+                  Os alertas consideram o perfil, as restrições e os alimentos a
+                  evitar. Confirme ingredientes, possíveis traços e orientações
+                  adicionais com o serviço de alimentação.
                 </p>
               </>
             )}

@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import type {
-  EstadoCardapio,
-  FormularioCardapio,
+import {
+  codigosAlergenosCardapio,
+  rotulosAlergenosCardapio,
+  type EstadoCardapio,
+  type FormularioCardapio,
 } from '../types/cardapioOrganizacao';
+import { ErroApi } from '../services/api';
 import {
   consultarCardapioOrganizacao,
   salvarCardapioOrganizacao,
@@ -23,6 +26,8 @@ const vazio = (nome: string): FormularioCardapio => ({
   preparacoes: '',
   ingredientes: '',
   alergenos: [],
+  podeConter: [],
+  perfisCompativeis: [],
   revisado: false,
   porcao: '450',
   energia: '',
@@ -31,7 +36,18 @@ const vazio = (nome: string): FormularioCardapio => ({
   gorduras: '',
   sodio: '',
 });
-const alergenos = ['Leite', 'Ovo', 'Glúten', 'Soja', 'Amendoim', 'Castanhas'];
+const perfisAlimentares = [
+  ['vegetariana', 'Vegetariana'],
+  ['vegana', 'Vegana'],
+  ['pescetariana', 'Pescetariana'],
+] as const;
+const camposDaRevisao: (keyof FormularioCardapio)[] = [
+  'preparacoes',
+  'ingredientes',
+  'alergenos',
+  'podeConter',
+  'perfisCompativeis',
+];
 const nutrientes = [
   ['energia', 'Energia', 'kcal'],
   ['carboidratos', 'Carboidratos', 'g'],
@@ -40,16 +56,23 @@ const nutrientes = [
   ['sodio', 'Sódio', 'mg'],
 ] as const;
 
+function alternarOpcao<T>(opcoes: T[], opcao: T, marcada: boolean): T[] {
+  return marcada ? [...opcoes, opcao] : opcoes.filter((item) => item !== opcao);
+}
+
 export default function CadastroCardapio({
   nomeOrganizacao,
+  cardapioId,
 }: {
   nomeOrganizacao: string;
+  cardapioId: string;
 }) {
   const [dados, setDados] = useState<FormularioCardapio>(() =>
     vazio(nomeOrganizacao),
   );
   const [erros, setErros] = useState<ErrosCardapio>({});
-  const [carregando, setCarregando] = useState(true);
+  const [id, setId] = useState(cardapioId);
+  const [carregando, setCarregando] = useState(Boolean(cardapioId));
   const [enviando, setEnviando] = useState<EstadoCardapio | null>(null);
   const [estado, setEstado] = useState<EstadoCardapio>('rascunho');
   const [alterado, setAlterado] = useState(false);
@@ -59,16 +82,15 @@ export default function CadastroCardapio({
   const [tentativa, setTentativa] = useState(0);
   const bloqueio = useRef(false);
   useEffect(() => {
+    if (!cardapioId) return;
     let ativo = true;
     setCarregando(true);
     setErroCarga('');
-    consultarCardapioOrganizacao()
+    consultarCardapioOrganizacao(cardapioId)
       .then((registro) => {
         if (!ativo) return;
-        if (registro) {
-          setDados(registro.dados);
-          setEstado(registro.estado);
-        }
+        setDados(registro.dados);
+        setEstado(registro.estado);
       })
       .catch(() => {
         if (ativo)
@@ -82,21 +104,22 @@ export default function CadastroCardapio({
     return () => {
       ativo = false;
     };
-  }, [tentativa]);
+  }, [cardapioId, tentativa]);
 
-  function alterar(
-    campo: keyof FormularioCardapio,
-    valor: string | boolean | string[],
+  function alterar<Campo extends keyof FormularioCardapio>(
+    campo: Campo,
+    valor: FormularioCardapio[Campo],
   ) {
-    setDados((anterior) => ({
-      ...anterior,
-      [campo]: valor,
-      ...(campo === 'ingredientes' ||
-      campo === 'preparacoes' ||
-      campo === 'alergenos'
-        ? { revisado: false }
-        : {}),
-    }));
+    setDados((anterior) => {
+      const atualizados = { ...anterior, [campo]: valor };
+      if (campo === 'alergenos') {
+        atualizados.podeConter = atualizados.podeConter.filter(
+          (codigo) => !atualizados.alergenos.includes(codigo),
+        );
+      }
+      if (camposDaRevisao.includes(campo)) atualizados.revisado = false;
+      return atualizados;
+    });
     setErros((anterior) => ({ ...anterior, [campo]: undefined }));
     setAlterado(true);
     setMensagem('');
@@ -116,21 +139,20 @@ export default function CadastroCardapio({
     bloqueio.current = true;
     setEnviando(destino);
     try {
-      const resultado = await salvarCardapioOrganizacao(dados, destino);
+      const resultado = await salvarCardapioOrganizacao(dados, destino, id);
+      setId(resultado.id);
+      setDados(resultado.dados);
       setEstado(resultado.estado);
       setAlterado(false);
       setMensagem(
-        resultado.modo === 'simulado'
-          ? destino === 'publicado'
-            ? 'Cardápio publicado (simulação).'
-            : 'Rascunho salvo (simulação).'
-          : destino === 'publicado'
-            ? 'Cardápio publicado com sucesso.'
-            : 'Rascunho salvo com sucesso.',
+        destino === 'publicado' ? 'Cardápio publicado com sucesso.' : 'Rascunho salvo com sucesso.',
       );
-    } catch {
+    } catch (erro) {
+      if (erro instanceof ErroApi && erro.campos) setErros(erro.campos);
       setErroEnvio(
-        'Não foi possível salvar o cardápio. Seus dados foram mantidos. Tente novamente.',
+        erro instanceof Error && !(erro instanceof TypeError)
+          ? erro.message
+          : 'Não foi possível salvar o cardápio. Seus dados foram mantidos. Tente novamente.',
       );
     } finally {
       bloqueio.current = false;
@@ -144,7 +166,7 @@ export default function CadastroCardapio({
       </span>
     ) : null;
   const campo = (
-    nome: Exclude<keyof FormularioCardapio, 'alergenos' | 'revisado'>,
+    nome: Exclude<keyof FormularioCardapio, 'alergenos' | 'podeConter' | 'perfisCompativeis' | 'revisado'>,
     titulo: string,
     tipo = 'text',
     placeholder?: string,
@@ -171,8 +193,8 @@ export default function CadastroCardapio({
     <main className="pagina-cadastro-cardapio">
       <a
         className="cadastro-cardapio-voltar"
-        href="#/organizacao"
-        aria-label="Voltar ao menu da organização"
+        href="#/organizacao/cardapios"
+        aria-label="Voltar aos cardápios"
       >
         ←
       </a>
@@ -261,38 +283,75 @@ export default function CadastroCardapio({
                 )}
                 {campo(
                   'ingredientes',
-                  'Ingredientes e alergênicos',
+                  'Ingredientes',
                   'text',
-                  'Informe os ingredientes e possíveis traços',
+                  'Ex.: Arroz integral, feijão, azeite',
                 )}
                 <fieldset className="cardapio-alergenos">
                   <legend>Alérgenos declarados pelo responsável</legend>
-                  {alergenos.map((item) => (
-                    <label key={item}>
+                  {codigosAlergenosCardapio.map((codigo) => (
+                    <label key={codigo}>
                       <input
                         type="checkbox"
-                        checked={dados.alergenos.includes(item)}
-                        onChange={() =>
+                        checked={dados.alergenos.includes(codigo)}
+                        onChange={(evento) =>
                           alterar(
                             'alergenos',
-                            dados.alergenos.includes(item)
-                              ? dados.alergenos.filter(
-                                  (valor) => valor !== item,
-                                )
-                              : [...dados.alergenos, item],
+                            alternarOpcao(dados.alergenos, codigo, evento.currentTarget.checked),
                           )
                         }
                       />
-                      {item}
+                      {rotulosAlergenosCardapio[codigo]}
                     </label>
                   ))}
                 </fieldset>
                 <p className="cardapio-alergenos-resumo">
                   Alérgenos declarados:{' '}
                   {dados.alergenos.length
-                    ? dados.alergenos.join(' e ').toLowerCase()
+                    ? dados.alergenos.map((codigo) => rotulosAlergenosCardapio[codigo]).join(' e ').toLowerCase()
                     : 'nenhum marcado; revise os ingredientes e possíveis traços'}
                 </p>
+                <fieldset className="cardapio-alergenos">
+                  <legend>Pode conter (possíveis traços)</legend>
+                  {codigosAlergenosCardapio.map((codigo) => (
+                    <label key={codigo}>
+                      <input
+                        type="checkbox"
+                        name="podeConter"
+                        value={codigo}
+                        checked={dados.podeConter.includes(codigo)}
+                        disabled={dados.alergenos.includes(codigo)}
+                        onChange={(evento) =>
+                          alterar(
+                            'podeConter',
+                            alternarOpcao(dados.podeConter, codigo, evento.currentTarget.checked),
+                          )
+                        }
+                      />
+                      {rotulosAlergenosCardapio[codigo]}
+                    </label>
+                  ))}
+                </fieldset>
+                <fieldset className="cardapio-alergenos">
+                  <legend>Perfis compatíveis</legend>
+                  {perfisAlimentares.map(([codigo, rotulo]) => (
+                    <label key={codigo}>
+                      <input
+                        type="checkbox"
+                        name="perfisCompativeis"
+                        value={codigo}
+                        checked={dados.perfisCompativeis.includes(codigo)}
+                        onChange={(evento) =>
+                          alterar(
+                            'perfisCompativeis',
+                            alternarOpcao(dados.perfisCompativeis, codigo, evento.currentTarget.checked),
+                          )
+                        }
+                      />
+                      {rotulo}
+                    </label>
+                  ))}
+                </fieldset>
                 <div className="cardapio-porcao">
                   {campo(
                     'porcao',
@@ -318,8 +377,8 @@ export default function CadastroCardapio({
                       erros.revisado ? 'cardapio-revisado-erro' : undefined
                     }
                   />
-                  Revisei os ingredientes e os alérgenos declarados, incluindo
-                  possíveis traços.
+                  Revisei os ingredientes, os alérgenos (incluindo possíveis
+                  traços) e os perfis compatíveis.
                 </label>
                 {erro('revisado')}
               </section>
@@ -329,7 +388,7 @@ export default function CadastroCardapio({
                 {alterado
                   ? 'Alterações não salvas'
                   : estado === 'publicado'
-                    ? 'Publicado (simulação)'
+                    ? 'Publicado'
                     : 'Rascunho'}{' '}
                 · Revise os alergênicos antes de publicar.
               </p>

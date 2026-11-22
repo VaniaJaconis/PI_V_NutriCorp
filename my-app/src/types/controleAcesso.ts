@@ -1,7 +1,5 @@
 export const perfisAcesso = [
   'Funcionário',
-  'Nutricionista',
-  'Administração',
   'Sem acesso',
 ] as const;
 
@@ -17,5 +15,5 @@ export interface ColaboradorAcesso {
 
 export interface ResultadoAtualizacaoAcesso {
   colaborador: ColaboradorAcesso;
-  modo: 'simulado' | 'api';
+  modo: 'api';
 }

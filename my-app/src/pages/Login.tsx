@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { CredenciaisInvalidas, entrar } from '../services/autenticacao';
+import { entrar } from '../services/autenticacao';
+import { ErroApi } from '../services/api';
 import type { ResultadoLogin } from '../types/autenticacao';
 import '../styles/login.css';
 
 interface Props {
   onEntrar: (resultado: ResultadoLogin) => void;
+  mensagemSessao: string;
 }
-export default function Login({ onEntrar }: Props) {
+export default function Login({ onEntrar, mensagemSessao }: Props) {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
   const [erros, setErros] = useState<{ usuario?: string; senha?: string }>({});
@@ -49,8 +51,8 @@ export default function Login({ onEntrar }: Props) {
     } catch (erro) {
       if (!ativo.current) return;
       setErroEnvio(
-        erro instanceof CredenciaisInvalidas
-          ? 'Usuário ou senha inválidos.'
+        erro instanceof ErroApi
+          ? erro.message
           : 'Não foi possível entrar. Tente novamente.',
       );
       setSenha('');
@@ -66,20 +68,22 @@ export default function Login({ onEntrar }: Props) {
         NutriCorp
       </header>
       <h1 tabIndex={-1}>Login</h1>
+      {mensagemSessao && <p className="erro-envio" role="status">{mensagemSessao}</p>}
       <form noValidate onSubmit={enviar} aria-busy={enviando}>
         <fieldset disabled={enviando}>
           <legend className="visualmente-oculto">Dados de acesso</legend>
           <div className="campo">
             <label className="visualmente-oculto" htmlFor="login-usuario">
-              Usuário
+              E-mail cadastrado
             </label>
             <input
               id="login-usuario"
               name="usuario"
-              placeholder="Usuário"
+              type="email"
+              placeholder="E-mail cadastrado"
               autoComplete="username"
               required
-              maxLength={200}
+              maxLength={254}
               value={usuario}
               aria-invalid={Boolean(erros.usuario)}
               aria-describedby={

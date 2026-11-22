@@ -1,9 +1,7 @@
-import type { CadastroResultado, NovoColaborador } from '../types/colaborador';
+import type { ResultadoLogin } from '../types/autenticacao';
+import type { NovoColaborador } from '../types/colaborador';
+import { chamarApi } from './api';
 
-// Integrar o cadastro do colaborador com o backend aqui.
-export async function cadastrarColaborador(
-  _dados: NovoColaborador,
-): Promise<CadastroResultado> {
-  await new Promise<void>((resolve) => window.setTimeout(resolve, 800));
-  return { id: crypto.randomUUID(), modo: 'simulado' };
+export function cadastrarColaborador(dados: NovoColaborador): Promise<ResultadoLogin> {
+  return chamarApi('/colaboradores', { metodo: 'POST', corpo: dados, publica: true });
 }

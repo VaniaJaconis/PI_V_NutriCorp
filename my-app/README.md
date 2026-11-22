@@ -1,9 +1,11 @@
-## Integração com o backend
+## Executar o frontend do NutriCorp
 
-Os locais de integração estão comentados em `src/services/`, indicando a operação que deve ser conectada ao backend. 
+1. Inicie o backend em seu próprio diretório com `npm ci` e `npm run dev`. A versão de demonstração usa `http://localhost:3333/api`.
+2. No diretório `my-app`, rode `npm ci` e `npm run dev`. Abra o endereço indicado pelo Vite.
+3. Para usar outra API, defina `VITE_API_URL` com a URL base completa (incluindo `/api`) em `my-app/.env.local` e reinicie o Vite. A origem do frontend deve estar em `CORS_ORIGIN` do backend.
 
-Confirmar os contratos de autenticação, organizações, colaboradores, preferências, cardápios, alternativas e registros. A API deve validar os dados, a sessão e as permissões, inclusive o acesso ao histórico individual. Os tipos em `src/types/` devem acompanhar esses contratos.
+Com os dados de demonstração da API, use `organizacao@nutricorp.dev` ou `colaborador@nutricorp.dev`, com a senha definida no README do backend. O cadastro de colaborador aceita o CNPJ ou o nome já cadastrado da organização.
 
-No cadastro de cardápio, converter os valores numéricos do formulário para o formato esperado pela API e substituir o texto da unidade por um identificador autorizado. Publicar no serviço simulado ainda não atualiza a consulta do colaborador.
+O frontend guarda o token e o perfil em `sessionStorage` e valida a sessão com a API quando a página é recarregada. Para cadastrar ou editar um cardápio, abra **Cardápios e Refeições** no menu da organização.
 
-O registro de consumo utiliza uma chave para evitar envios duplicados. Manter esse controle no backend. Os valores nutricionais correspondem à porção cadastrada; observações livres não recalculam nutrientes.
+Rode `npm run build` para verificar os tipos e gerar a versão de produção.

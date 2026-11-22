@@ -7,8 +7,3 @@ export interface NovoColaborador {
   emailCorporativo: string;
   senha: string;
 }
-
-export interface CadastroResultado {
-  id: string;
-  modo: 'simulado' | 'api';
-}

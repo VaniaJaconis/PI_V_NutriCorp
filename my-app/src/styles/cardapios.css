@@ -22,11 +22,23 @@
   outline: 3px solid #40782b;
   outline-offset: 2px;
 }
-.cardapios-demonstracao {
-  font-size: 12px;
-  color: #60675c;
-  text-align: center;
+.cardapios-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
   margin: 0 0 22px;
+}
+.cardapios-acoes a {
+  border: 1px solid var(--verde);
+  border-radius: 6px;
+  color: var(--verde);
+  padding: 8px 14px;
+  text-decoration: none;
+  font-weight: 600;
+}
+.cardapios-acoes a:hover {
+  background: #f1f6ed;
 }
 .cardapios-colunas {
   display: grid;

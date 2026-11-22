@@ -1,8 +1,9 @@
 interface Props {
   nome: string;
+  onSair: () => void;
 }
 
-export default function InicioColaborador({ nome }: Props) {
+export default function InicioColaborador({ nome, onSair }: Props) {
   return (
     <main className="inicio-colaborador">
       <header className="marca" aria-label="NutriCorp">
@@ -22,6 +23,7 @@ export default function InicioColaborador({ nome }: Props) {
       <a className="registro-link registro-menu" href="#/colaborador/refeicoes">
         Registrar refeição e consultar histórico
       </a>
+      <button className="sessao-sair" type="button" onClick={onSair}>Sair</button>
     </main>
   );
 }

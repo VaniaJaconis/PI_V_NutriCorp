@@ -86,11 +86,8 @@ export default function PreferenciasColaborador() {
         alimentosEvitar: dados.alimentosEvitar.trim(),
         outrasOrientacoes: dados.outrasOrientacoes.trim(),
       });
-      setAviso(
-        resultado.modo === 'simulado'
-          ? 'Preferências salvas (simulação). Os dados são apagados ao recarregar.'
-          : 'Preferências salvas com sucesso.',
-      );
+      setDados(resultado.preferencias);
+      setAviso('Preferências salvas com sucesso.');
     } catch {
       setErro(
         'Não foi possível salvar suas preferências. Suas escolhas foram mantidas. Tente novamente.',

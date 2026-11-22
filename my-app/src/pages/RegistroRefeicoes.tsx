@@ -4,8 +4,7 @@ import {
   consultarOpcoesRegistro,
   registrarRefeicao,
 } from '../services/registrosRefeicoes';
-import { consultarPreferencias } from '../services/preferencias';
-import { avaliarCompatibilidade } from '../validation/compatibilidade';
+import { ErroApi } from '../services/api';
 import {
   hojeSaoPaulo,
   validarRegistro,
@@ -17,18 +16,19 @@ import type {
   RegistroRefeicao,
   TipoRefeicao,
 } from '../types/registroRefeicao';
-import type { PreferenciasColaborador } from '../types/preferencias';
 import '../styles/registro-refeicoes.css';
 
 const formatarData = (data: string) =>
   `${data.slice(8, 10)}/${data.slice(5, 7)}`;
 export default function RegistroRefeicoes({
   opcaoInicial,
+  dataInicial,
 }: {
   opcaoInicial: string;
+  dataInicial: string;
 }) {
   const [form, setForm] = useState<EntradaRegistro>(() => ({
-    data: hojeSaoPaulo(),
+    data: dataInicial || hojeSaoPaulo(),
     tipo: 'Almoço',
     opcaoId: '',
     observacoes: '',
@@ -36,9 +36,11 @@ export default function RegistroRefeicoes({
   }));
   const [opcoes, setOpcoes] = useState<OpcaoRegistro[]>([]);
   const [historico, setHistorico] = useState<RegistroRefeicao[]>([]);
-  const [perfil, setPerfil] = useState<PreferenciasColaborador | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erroCarga, setErroCarga] = useState('');
+  const [carregandoOpcoes, setCarregandoOpcoes] = useState(true);
+  const [erroOpcoes, setErroOpcoes] = useState('');
+  const [tentativaOpcoes, setTentativaOpcoes] = useState(0);
   const [erroEnvio, setErroEnvio] = useState('');
   const [erros, setErros] = useState<ErrosRegistro>({});
   const [enviando, setEnviando] = useState(false);
@@ -46,21 +48,39 @@ export default function RegistroRefeicoes({
   const [mensagem, setMensagem] = useState('');
   const [tentativa, setTentativa] = useState(0);
   const bloqueio = useRef(false);
+  const opcaoPendente = useRef(opcaoInicial);
+  const { data } = form;
+  const dataValida = !validarRegistro(form).data;
   useEffect(() => {
-    let ativo = true;
+    const controller = new AbortController();
     setCarregando(true);
     setErroCarga('');
-    Promise.all([
-      consultarOpcoesRegistro(),
-      consultarHistoricoRefeicoes(),
-      consultarPreferencias(),
-    ])
-      .then(([lista, registros, preferencias]) => {
-        if (!ativo) return;
+    consultarHistoricoRefeicoes(controller.signal)
+      .then((registros) => {
+        if (!controller.signal.aborted) setHistorico(registros);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted)
+          setErroCarga('Não foi possível carregar seu histórico. Tente novamente.');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCarregando(false);
+      });
+    return () => controller.abort();
+  }, [tentativa]);
+
+  useEffect(() => {
+    setOpcoes([]);
+    setErroOpcoes('');
+    setCarregandoOpcoes(dataValida);
+    if (!dataValida) return;
+    const controller = new AbortController();
+    consultarOpcoesRegistro(data, controller.signal)
+      .then((lista) => {
+        if (controller.signal.aborted) return;
         setOpcoes(lista);
-        setHistorico(registros);
-        setPerfil(preferencias);
-        const inicial = lista.find((item) => item.id === opcaoInicial);
+        const inicial = lista.find((item) => item.id === opcaoPendente.current);
+        opcaoPendente.current = '';
         if (inicial)
           setForm((anterior) => ({
             ...anterior,
@@ -69,23 +89,16 @@ export default function RegistroRefeicoes({
           }));
       })
       .catch(() => {
-        if (ativo)
-          setErroCarga(
-            'Não foi possível carregar as refeições e seu histórico. Tente novamente.',
-          );
+        if (!controller.signal.aborted)
+          setErroOpcoes('Não foi possível carregar as refeições desta data.');
       })
       .finally(() => {
-        if (ativo) setCarregando(false);
+        if (!controller.signal.aborted) setCarregandoOpcoes(false);
       });
-    return () => {
-      ativo = false;
-    };
-  }, [opcaoInicial, tentativa]);
+    return () => controller.abort();
+  }, [data, dataValida, tentativaOpcoes]);
   const selecionada = opcoes.find((item) => item.id === form.opcaoId);
-  const analise =
-    selecionada && perfil
-      ? avaliarCompatibilidade(selecionada.prato, perfil)
-      : null;
+  const analise = selecionada?.avaliacao;
   const registrosMes = historico
     .filter((item) => item.data.slice(0, 7) === form.data.slice(0, 7))
     .sort(
@@ -105,10 +118,15 @@ export default function RegistroRefeicoes({
     campo: 'data' | 'tipo' | 'opcaoId' | 'observacoes',
     valor: string,
   ) {
+    if (campo === 'data' || campo === 'tipo') opcaoPendente.current = '';
+    if (campo === 'data') {
+      setOpcoes([]);
+      setCarregandoOpcoes(true);
+    }
     setForm((anterior) => ({
       ...anterior,
       [campo]: valor,
-      ...(campo === 'tipo' ? { opcaoId: '' } : {}),
+      ...(campo === 'tipo' || campo === 'data' ? { opcaoId: '' } : {}),
       requisicaoId: crypto.randomUUID(),
     }));
     setErros((anterior) => ({ ...anterior, [campo]: undefined }));
@@ -118,7 +136,7 @@ export default function RegistroRefeicoes({
   }
   async function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
-    if (bloqueio.current || concluido) return;
+    if (bloqueio.current || concluido || carregandoOpcoes || erroOpcoes) return;
     const validacao = validarRegistro(form);
     setErros(validacao);
     setErroEnvio('');
@@ -137,12 +155,13 @@ export default function RegistroRefeicoes({
         ...anterior.filter((item) => item.id !== registro.id),
       ]);
       setConcluido(true);
-      setMensagem(
-        'Refeição registrada (simulação). Os novos registros são apagados ao recarregar.',
-      );
-    } catch {
+      setMensagem('Refeição registrada com sucesso.');
+    } catch (erro) {
+      if (erro instanceof ErroApi && erro.campos) setErros(erro.campos);
       setErroEnvio(
-        'Não foi possível registrar a refeição. Seus dados foram mantidos. Tente novamente.',
+        erro instanceof ErroApi
+          ? erro.message
+          : 'Não foi possível registrar a refeição. Seus dados foram mantidos. Tente novamente.',
       );
     } finally {
       bloqueio.current = false;
@@ -176,7 +195,7 @@ export default function RegistroRefeicoes({
         Registre o que você consumiu e acompanhe seu histórico alimentar.
       </p>
       {carregando ? (
-        <p role="status">Carregando refeições e histórico…</p>
+        <p role="status">Carregando histórico…</p>
       ) : erroCarga ? (
         <div>
           <p role="alert">{erroCarga}</p>
@@ -236,6 +255,7 @@ export default function RegistroRefeicoes({
                   <select
                     id="registro-opcaoId"
                     value={form.opcaoId}
+                    disabled={carregandoOpcoes || Boolean(erroOpcoes) || !dataValida}
                     {...atributos('opcaoId')}
                     onChange={(e) => alterar('opcaoId', e.target.value)}
                   >
@@ -249,7 +269,20 @@ export default function RegistroRefeicoes({
                       ))}
                   </select>
                   {erro('opcaoId')}
-                  {!opcoes.some((item) => item.tipo === form.tipo) && (
+                  {carregandoOpcoes && <p role="status">Carregando refeições…</p>}
+                  {erroOpcoes && (
+                    <>
+                      <p role="alert">{erroOpcoes}</p>
+                      <button
+                        type="button"
+                        className="registro-repetir"
+                        onClick={() => setTentativaOpcoes((valor) => valor + 1)}
+                      >
+                        Tentar novamente
+                      </button>
+                    </>
+                  )}
+                  {dataValida && !carregandoOpcoes && !erroOpcoes && !opcoes.some((item) => item.tipo === form.tipo) && (
                     <p className="registro-nota">
                       Nenhuma opção disponível para este tipo de refeição.
                     </p>
@@ -353,9 +386,8 @@ export default function RegistroRefeicoes({
                   : 'Informações nutricionais não disponíveis.'}
               </p>
               <p className="registro-nota">
-                Dados demonstrativos. Data de consumo e horário do registro.
-                Confirme ingredientes e possíveis traços; orientações em texto
-                livre não são analisadas.
+                Confirme ingredientes, possíveis traços e orientações adicionais
+                com o serviço de alimentação.
               </p>
             </div>
             <div className="registro-acoes">
@@ -369,7 +401,7 @@ export default function RegistroRefeicoes({
               >
                 Cancelar
               </button>
-              <button type="submit" disabled={enviando || concluido}>
+              <button type="submit" disabled={enviando || concluido || carregandoOpcoes || Boolean(erroOpcoes)}>
                 {enviando
                   ? 'Registrando…'
                   : concluido

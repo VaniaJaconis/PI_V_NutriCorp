@@ -3,68 +3,32 @@ import type {
   PerfilAcesso,
   ResultadoAtualizacaoAcesso,
 } from '../types/controleAcesso';
+import { chamarApi } from './api';
 
-const dadosDemonstracao: ColaboradorAcesso[] = [
-  {
-    id: 'colaborador-123456789',
-    nome: 'Mariana Oliveira',
-    setor: 'Financeiro',
-    acesso: 'Funcionário',
-    codigoFuncionario: '123456789',
-  },
-  {
-    id: 'colaborador-234567891',
-    nome: 'Camila Ferreira',
-    setor: 'N/A',
-    acesso: 'Nutricionista',
-    codigoFuncionario: '234567891',
-  },
-  {
-    id: 'colaborador-345678912',
-    nome: 'Patrícia Almeida',
-    setor: 'RH',
-    acesso: 'Administração',
-    codigoFuncionario: '345678912',
-  },
-  {
-    id: 'colaborador-456789123',
-    nome: 'Claudio Souza',
-    setor: 'Infra de TI',
-    acesso: 'Sem acesso',
-    codigoFuncionario: '456789123',
-  },
-  {
-    id: 'colaborador-567891234',
-    nome: 'Lucio Cezar',
-    setor: 'RH',
-    acesso: 'Funcionário',
-    codigoFuncionario: '567891234',
-  },
-];
-
-let colaboradores = structuredClone(dadosDemonstracao);
-
-export function limparAcessosSimulados() {
-  colaboradores = structuredClone(dadosDemonstracao);
+interface ColaboradorApi {
+  id: string;
+  nomeCompleto: string;
+  setor: string;
+  codigoFuncionario: string;
+  ativo: boolean;
 }
 
-// Substituir estas operações pelos endpoints autenticados da organização.
+function paraTela({ id, nomeCompleto, setor, codigoFuncionario, ativo }: ColaboradorApi): ColaboradorAcesso {
+  return { id, nome: nomeCompleto, setor, codigoFuncionario, acesso: ativo ? 'Funcionário' : 'Sem acesso' };
+}
+
 export async function consultarAcessos(): Promise<ColaboradorAcesso[]> {
-  await new Promise<void>((resolve) => window.setTimeout(resolve, 250));
-  return structuredClone(colaboradores);
+  const colaboradores = await chamarApi<ColaboradorApi[]>('/organizacao/colaboradores');
+  return colaboradores.map(paraTela);
 }
 
 export async function atualizarAcesso(
   id: string,
   acesso: PerfilAcesso,
 ): Promise<ResultadoAtualizacaoAcesso> {
-  await new Promise<void>((resolve) => window.setTimeout(resolve, 250));
-  const colaborador = colaboradores.find((item) => item.id === id);
-  if (!colaborador) throw new Error('Colaborador não encontrado.');
-
-  colaborador.acesso = acesso;
-  return {
-    colaborador: structuredClone(colaborador),
-    modo: 'simulado',
-  };
+  const colaborador = await chamarApi<ColaboradorApi>(`/organizacao/colaboradores/${encodeURIComponent(id)}`, {
+    metodo: 'PATCH',
+    corpo: { ativo: acesso === 'Funcionário' },
+  });
+  return { colaborador: paraTela(colaborador), modo: 'api' };
 }

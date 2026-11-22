@@ -106,7 +106,7 @@ export default function Indicadores() {
                         <div className="grafico-trilha">
                           <span
                             className="grafico-barra"
-                            style={{ height: `${item.valor}%` }}
+                            style={{ height: `${item.percentual}%` }}
                             title={`${item.dia}: ${item.valor} refeições`}
                           />
                         </div>

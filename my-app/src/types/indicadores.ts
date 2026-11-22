@@ -1,6 +1,7 @@
 export interface RegistroIndicadorDia {
   dia: string;
   valor: number;
+  percentual: number;
 }
 
 export interface IndicadoresConsolidados {

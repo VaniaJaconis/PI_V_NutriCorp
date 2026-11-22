@@ -1,6 +1,6 @@
 import '../styles/inicio-organizacao.css';
 
-export default function InicioOrganizacao({ nome }: { nome: string }) {
+export default function InicioOrganizacao({ nome, onSair }: { nome: string; onSair: () => void }) {
   return (
     <main className="inicio-organizacao">
       <header className="marca" aria-label="NutriCorp">
@@ -18,6 +18,7 @@ export default function InicioOrganizacao({ nome }: { nome: string }) {
           Indicadores
         </a>
       </nav>
+      <button className="sessao-sair" type="button" onClick={onSair}>Sair</button>
     </main>
   );
 }

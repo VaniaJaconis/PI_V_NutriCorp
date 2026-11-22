@@ -4,7 +4,7 @@ import {
   selecionarAlternativa,
 } from '../services/alternativas';
 import { consultarPreferencias } from '../services/preferencias';
-import { avaliarCompatibilidade } from '../validation/compatibilidade';
+import { hojeSaoPaulo } from '../validation/registroRefeicao';
 import type { PreferenciasColaborador } from '../types/preferencias';
 import '../styles/compatibilidade.css';
 
@@ -64,33 +64,28 @@ export default function CompatibilidadeRefeicao({
   }, [refeicaoId, tentativa]);
 
   const linhas =
-    dados && perfil
-      ? dados.refeicao.pratos.map((prato) => ({
-          prato,
-          ...avaliarCompatibilidade(prato, perfil),
-        }))
+    dados
+      ? dados.refeicao.pratos.flatMap((prato) => {
+          const avaliacao = dados.avaliacoes.find((item) => item.pratoId === prato.id);
+          return avaliacao ? [{ prato, ...avaliacao }] : [];
+        })
       : [];
   const alertas = linhas.flatMap((linha) =>
     linha.alertas.map((alerta) => `${linha.prato.nome}: ${alerta}`),
   );
   const incompleto = linhas.some((linha) => linha.incompleto);
-  const analiseAlternativa =
-    dados?.alternativa && perfil
-      ? avaliarCompatibilidade(dados.alternativa, perfil)
-      : null;
-  const alternativaCompativel = Boolean(
-    analiseAlternativa &&
-    !analiseAlternativa.incompleto &&
-    !analiseAlternativa.alertas.length,
-  );
+  const alternativa = dados?.alternativas.find(
+    (item) => item.refeicaoId === dados.alternativaSelecionada,
+  ) ?? dados?.alternativas[0];
+  const alternativaCompativel = alternativa?.avaliacao.situacao === 'compativel';
   const selecionada = Boolean(
-    dados?.alternativa && dados.alternativaSelecionada === dados.alternativa.id,
+    alternativa && dados?.alternativaSelecionada === alternativa.refeicaoId,
   );
   const voltar = `#/colaborador/cardapios?refeicao=${encodeURIComponent(refeicaoId)}`;
 
   async function selecionar() {
     if (
-      !dados?.alternativa ||
+      !alternativa ||
       !alternativaCompativel ||
       selecionada ||
       bloqueio.current
@@ -101,12 +96,12 @@ export default function CompatibilidadeRefeicao({
     setErroSelecao('');
     setMensagem('');
     try {
-      await selecionarAlternativa(refeicaoId, dados.alternativa.id);
+      const resultado = await selecionarAlternativa(refeicaoId, alternativa.refeicaoId);
       setDados((anterior) =>
         anterior
           ? {
               ...anterior,
-              alternativaSelecionada: anterior.alternativa?.id ?? null,
+              alternativaSelecionada: resultado.alternativaSelecionada,
             }
           : anterior,
       );
@@ -157,7 +152,7 @@ export default function CompatibilidadeRefeicao({
             </p>
             {alertas.length > 0 ? (
               <div className="compatibilidade-aviso" role="status">
-                <h2>Atenção: esta refeição apresenta incompatibilidades</h2>
+                <h2>Alertas de compatibilidade desta refeição</h2>
                 {alertas.map((alerta) => (
                   <p key={alerta}>{alerta}</p>
                 ))}
@@ -187,7 +182,7 @@ export default function CompatibilidadeRefeicao({
                     </thead>
                     <tbody>
                       {linhas.map(
-                        ({ prato, alertas: avisos, incompleto: parcial }) => (
+                        ({ prato, alertas: avisos, incompleto: parcial, situacao }) => (
                           <tr key={prato.id}>
                             <th scope="row">{prato.nome}</th>
                             <td
@@ -198,7 +193,7 @@ export default function CompatibilidadeRefeicao({
                               }
                             >
                               {avisos.length
-                                ? `Incompatível · ${avisos.join(' ')}`
+                                ? `${situacao === 'incompativel' ? 'Incompatível' : 'Atenção'} · ${avisos.join(' ')}`
                                 : parcial
                                   ? 'Informações incompletas'
                                   : 'Compatível*'}
@@ -229,14 +224,14 @@ export default function CompatibilidadeRefeicao({
                     ? 'Alternativa compatível*'
                     : 'Alternativa disponível'}
                 </h2>
-                {dados.alternativa ? (
+                {alternativa ? (
                   <>
-                    <h3>{dados.alternativa.nome}</h3>
-                    <p>{dados.alternativa.ingredientes.join(', ')}.</p>
-                    {dados.alternativa.nutricional && (
+                    <h3>{alternativa.prato.nome}</h3>
+                    <p>{alternativa.prato.ingredientes.join(', ')}.</p>
+                    {alternativa.prato.nutricional && (
                       <p>
-                        Porção de {dados.alternativa.nutricional.porcaoGramas} g
-                        {dados.alternativa.nutricional.nutrientes
+                        Porção de {alternativa.prato.nutricional.porcaoGramas} g
+                        {alternativa.prato.nutricional.nutrientes
                           .map(
                             (item) =>
                               ` · ${item.quantidade.toLocaleString('pt-BR')} ${item.unidade}${item.nome === 'Proteínas' ? ' de proteínas' : ''}`,
@@ -247,7 +242,7 @@ export default function CompatibilidadeRefeicao({
                     {!alternativaCompativel && (
                       <p className="compatibilidade-texto-alerta">
                         Esta alternativa não atende ao perfil ou possui dados
-                        insuficientes. {analiseAlternativa?.alertas.join(' ')}
+                        insuficientes. {alternativa.avaliacao.alertas.join(' ')}
                       </p>
                     )}
                     <button
@@ -266,10 +261,10 @@ export default function CompatibilidadeRefeicao({
                     {selecionada && !alternativaCompativel && (
                       <p>Seu perfil mudou. Revise a seleção anterior.</p>
                     )}
-                    {selecionada && (
+                    {selecionada && dados.data && dados.data <= hojeSaoPaulo() && (
                       <a
                         className="registro-link"
-                        href={`#/colaborador/refeicoes?opcao=${encodeURIComponent(dados.alternativa.id)}`}
+                        href={`#/colaborador/refeicoes?${new URLSearchParams({ opcao: alternativa.refeicaoId, data: dados.data })}`}
                       >
                         Registrar consumo desta alternativa
                       </a>
@@ -292,8 +287,7 @@ export default function CompatibilidadeRefeicao({
                 </p>
                 <p>
                   * Compatibilidade limitada aos dados cadastrados. Confirme
-                  possíveis traços com a equipe. Alimentos a evitar e
-                  orientações em texto livre não são analisados automaticamente.
+                  possíveis traços e orientações adicionais com a equipe.
                 </p>
               </div>
               <a

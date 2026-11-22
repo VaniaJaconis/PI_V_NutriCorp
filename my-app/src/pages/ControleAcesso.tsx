@@ -53,11 +53,7 @@ export default function ControleAcesso({ nome }: { nome: string }) {
           item.id === resultado.colaborador.id ? resultado.colaborador : item,
         ),
       );
-      setMensagem(
-        resultado.modo === 'simulado'
-          ? 'Acesso atualizado nesta sessão de demonstração.'
-          : 'Acesso atualizado com sucesso.',
-      );
+      setMensagem('Acesso atualizado com sucesso.');
     } catch (erro) {
       setErroAtualizacao(
         erro instanceof Error

@@ -1,6 +1,8 @@
 import { useRef, useState, type FormEvent } from 'react';
 import type { NovaOrganizacao } from '../types/organizacao';
 import { cadastrarOrganizacao } from '../services/organizacoes';
+import { ErroApi } from '../services/api';
+import type { ResultadoLogin } from '../types/autenticacao';
 import {
   formatarCnpj,
   normalizarCnpj,
@@ -31,7 +33,7 @@ const campos = [
 ] as const;
 
 interface Props {
-  onCadastroConcluido?: (nomeFantasia: string) => void;
+  onCadastroConcluido?: (resultado: ResultadoLogin) => void;
 }
 
 export default function CadastroOrganizacao({ onCadastroConcluido }: Props) {
@@ -78,16 +80,17 @@ export default function CadastroOrganizacao({ onCadastroConcluido }: Props) {
       });
       setDados(vazio);
       setEstado('sucesso');
-      setMensagem(
-        cadastro.modo === 'simulado'
-          ? 'Cadastro Concluido'
-          : 'Organização cadastrada com sucesso.',
-      );
-      onCadastroConcluido?.(dados.nomeFantasia.trim());
-    } catch {
+      setMensagem('Organização cadastrada com sucesso.');
+      onCadastroConcluido?.(cadastro);
+    } catch (erro) {
       setEstado('erro');
+      if (erro instanceof ErroApi && erro.campos) {
+        setErros(erro.campos);
+        const campo = campos.find(({ nome }) => erro.campos?.[nome]);
+        if (campo) document.getElementById('organizacao-' + campo.nome)?.focus();
+      }
       setMensagem(
-        'Não foi possível cadastrar a organização. Revise os dados ou tente novamente.',
+        erro instanceof ErroApi ? erro.message : 'Não foi possível cadastrar a organização. Tente novamente.',
       );
     } finally {
       bloqueio.current = false;

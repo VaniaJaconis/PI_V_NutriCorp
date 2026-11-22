@@ -1,9 +1,10 @@
-import type { Prato } from './cardapio';
+import type { AvaliacaoCompatibilidade, Prato } from './cardapio';
 export type TipoRefeicao = 'Café da manhã' | 'Almoço' | 'Lanche' | 'Jantar';
 export interface OpcaoRegistro {
   id: string;
   tipo: TipoRefeicao;
   prato: Prato;
+  avaliacao: AvaliacaoCompatibilidade;
 }
 export interface EntradaRegistro {
   data: string;

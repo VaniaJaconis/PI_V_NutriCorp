@@ -1,12 +1,7 @@
-import type {
-  NovaOrganizacao,
-  ResultadoCadastroOrganizacao,
-} from '../types/organizacao';
+import type { ResultadoLogin } from '../types/autenticacao';
+import type { NovaOrganizacao } from '../types/organizacao';
+import { chamarApi } from './api';
 
-// Integrar o cadastro da organização com o backend aqui.
-export async function cadastrarOrganizacao(
-  _dados: NovaOrganizacao,
-): Promise<ResultadoCadastroOrganizacao> {
-  await new Promise<void>((resolve) => window.setTimeout(resolve, 800));
-  return { id: crypto.randomUUID(), modo: 'simulado' };
+export function cadastrarOrganizacao(dados: NovaOrganizacao): Promise<ResultadoLogin> {
+  return chamarApi('/organizacoes', { metodo: 'POST', corpo: dados, publica: true });
 }

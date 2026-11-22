@@ -1,5 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { cadastrarColaborador } from '../services/colaboradores';
+import { ErroApi } from '../services/api';
+import type { ResultadoLogin } from '../types/autenticacao';
 import type { NovoColaborador } from '../types/colaborador';
 import {
   formatarCpf,
@@ -20,7 +22,7 @@ const vazio: NovoColaborador = {
 const campos = [
   { nome: 'nomeCompleto', titulo: 'Nome Completo', autocomplete: 'name' },
   { nome: 'cpf', titulo: 'CPF', autocomplete: 'off' },
-  { nome: 'empresa', titulo: 'Empresa', autocomplete: 'organization' },
+  { nome: 'empresa', titulo: 'Empresa (CNPJ ou nome cadastrado)', autocomplete: 'organization' },
   { nome: 'setor', titulo: 'Setor', autocomplete: 'off' },
   {
     nome: 'codigoFuncionario',
@@ -36,7 +38,7 @@ const campos = [
 ] as const;
 
 interface Props {
-  onCadastroConcluido?: (nomeCompleto: string) => void;
+  onCadastroConcluido?: (resultado: ResultadoLogin) => void;
 }
 
 export default function CadastroColaborador({ onCadastroConcluido }: Props) {
@@ -85,15 +87,16 @@ export default function CadastroColaborador({ onCadastroConcluido }: Props) {
       });
       setDados(vazio);
       setEstado('sucesso');
-      setMensagem(
-        resultado.modo === 'simulado'
-          ? 'Deu certo.'
-          : 'Cadastro realizado com sucesso.',
-      );
-      onCadastroConcluido?.(dados.nomeCompleto.trim());
-    } catch {
+      setMensagem('Cadastro realizado com sucesso.');
+      onCadastroConcluido?.(resultado);
+    } catch (erro) {
       setEstado('erro');
-      setMensagem('Não foi possível concluir o cadastro. Tente novamente.');
+      if (erro instanceof ErroApi && erro.campos) {
+        setErros(erro.campos);
+        const campo = campos.find(({ nome }) => erro.campos?.[nome]);
+        if (campo) document.getElementById(campo.nome)?.focus();
+      }
+      setMensagem(erro instanceof ErroApi ? erro.message : 'Não foi possível concluir o cadastro. Tente novamente.');
     } finally {
       enviando.current = false;
     }

@@ -20,4 +20,12 @@ export interface Refeicao {
   id: string;
   titulo: string;
   pratos: Prato[];
+  avaliacoes?: AvaliacaoCompatibilidade[];
+}
+
+export interface AvaliacaoCompatibilidade {
+  pratoId: string;
+  situacao: 'compativel' | 'parcial' | 'incompativel';
+  alertas: string[];
+  incompleto: boolean;
 }

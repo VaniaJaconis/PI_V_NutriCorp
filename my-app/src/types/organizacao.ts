@@ -6,7 +6,3 @@ export interface NovaOrganizacao {
   emailComunicacao: string;
   senha: string;
 }
-export interface ResultadoCadastroOrganizacao {
-  id: string;
-  modo: 'simulado' | 'api';
-}
