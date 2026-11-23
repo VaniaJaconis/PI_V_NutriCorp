@@ -27,7 +27,8 @@ Dados de demonstração (senha `NutriCorp123!`):
 
 | Usuário | Perfil |
 |---|---|
-| `organizacao@nutricorp.dev` | organização |
+| `organizacao@nutricorp.dev` | organização, papel RH (conta principal) |
+| `cozinha@nutricorp.dev` | organização, papel Cozinha |
 | `colaborador@nutricorp.dev` | colaborador (vegetariana, sem lactose) |
 | `bruno.lima@nutricorp.dev` | colaborador |
 | `carla.mendes@nutricorp.dev` | colaborador com acesso desativado |
@@ -48,6 +49,7 @@ Todas em `/api`. Detalhes de entrada e saída em `/api/docs`.
 
 | Rota | Uso |
 |---|---|
+| `GET /cnpj/{cnpj}` | consulta a ReceitaWS e devolve razão social, nome fantasia e setor (cache em memória, só CNPJ numérico) |
 | `POST /organizacoes` | cadastro da organização (já devolve o token) |
 | `POST /colaboradores` | cadastro do colaborador (fica pendente até a organização aprovar) |
 | `POST /auth/login` · `GET /auth/sessao` · `PUT /auth/senha` | login, sessão atual e troca da própria senha |
@@ -60,6 +62,9 @@ Todas em `/api`. Detalhes de entrada e saída em `/api/docs`.
 | `GET /organizacao/indicadores?inicio=&fim=` | indicadores agregados (até 92 dias) |
 | `GET /organizacao/colaboradores` · `PATCH /organizacao/colaboradores/{id}` | controle de acesso (`ativo: true` também aprova) |
 | `POST /organizacao/colaboradores/{id}/senha` | gera senha temporária para o colaborador |
+| `GET` `POST /organizacao/equipe` · `PATCH /organizacao/equipe/{id}` · `POST .../senha` | equipe de RH e Cozinha (só RH) |
+
+Permissões no perfil `organizacao`: **RH** acessa colaboradores, equipe, indicadores e consulta cardápios. **Cozinha** cria, edita e exclui cardápios e consulta indicadores.
 
 ## Estrutura
 
@@ -76,7 +81,8 @@ src/
 
 A base é o modelo do Gustavo (`database/migrations/001` e `002`). As migrações `003_ajustes_para_api.sql` e `004_aprovacao_e_consentimento.sql` acrescentam o que as telas usam. O repositório PostgreSQL converte entre os dois modelos:
 
-- Organização: linha em `organizacoes` + usuário com papel `rh`, que faz o login da organização.
+- Organização: linha em `organizacoes` + usuário com papel `rh`, que faz o login da organização (conta principal).
+- Equipe: demais usuários com papel `rh` ou `cozinha` da mesma organização.
 - Colaborador: usuário com papel `colaborador` (CPF, setor, código, aprovação e situação do acesso).
 - Preferências: perfil e restrições em `perfis_alimentares` (marcadores), texto livre e data do consentimento em `preferencias_colaborador`.
 - Cardápio: `cardapios` + um item + uma `refeicao`, com ingredientes, alérgenos (`refeicoes_marcadores`) e informação nutricional.

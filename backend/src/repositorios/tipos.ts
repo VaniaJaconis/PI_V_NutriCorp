@@ -1,6 +1,7 @@
 import type {
   Cardapio,
   Colaborador,
+  MembroEquipe,
   Organizacao,
   Preferencias,
   RegistroRefeicao,
@@ -17,6 +18,14 @@ export interface RepositorioOrganizacoes {
   buscarPorCnpj(cnpj: string): Promise<Organizacao | null>;
   buscarPorEmail(email: string): Promise<Organizacao | null>;
   listarPorNome(nome: string): Promise<Organizacao[]>;
+}
+
+export interface RepositorioEquipe {
+  criar(membro: Novo<MembroEquipe>): Promise<MembroEquipe>;
+  atualizar(membro: MembroEquipe): Promise<void>;
+  buscarPorId(id: string): Promise<MembroEquipe | null>;
+  buscarPorEmail(email: string): Promise<MembroEquipe | null>;
+  listarPorOrganizacao(organizacaoId: string): Promise<MembroEquipe[]>;
 }
 
 export interface RepositorioColaboradores {
@@ -69,6 +78,7 @@ export interface RepositorioSelecoes {
 
 export interface Repositorios {
   organizacoes: RepositorioOrganizacoes;
+  equipe: RepositorioEquipe;
   colaboradores: RepositorioColaboradores;
   preferencias: RepositorioPreferencias;
   cardapios: RepositorioCardapios;

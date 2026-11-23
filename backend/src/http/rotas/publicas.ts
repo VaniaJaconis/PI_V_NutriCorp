@@ -24,8 +24,25 @@ export function rotasPublicas(servicos: Servicos) {
     },
   });
 
+  const limiteCnpj = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 30,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: {
+      erro: {
+        codigo: 'muitas_tentativas',
+        mensagem: 'Muitas consultas de CNPJ. Preencha os dados manualmente ou tente mais tarde.',
+      },
+    },
+  });
+
   rotas.get('/saude', (_req, res) => {
     res.json({ status: 'ok' });
+  });
+
+  rotas.get('/cnpj/:cnpj', limiteCnpj, async (req, res) => {
+    res.json(await servicos.cnpj.consultar(String(req.params.cnpj)));
   });
 
   rotas.post('/organizacoes', limite, async (req, res) => {

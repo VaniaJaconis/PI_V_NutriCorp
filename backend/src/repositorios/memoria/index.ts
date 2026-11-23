@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type {
   Cardapio,
   Colaborador,
+  MembroEquipe,
   Organizacao,
   Preferencias,
   RegistroRefeicao,
@@ -16,6 +17,7 @@ const copiaOuNulo = <T>(valor: T | undefined): T | null =>
 
 export function criarRepositoriosEmMemoria(): Repositorios {
   const organizacoes = new Map<string, Organizacao>();
+  const equipe = new Map<string, MembroEquipe>();
   const colaboradores = new Map<string, Colaborador>();
   const preferencias = new Map<string, Preferencias>();
   const cardapios = new Map<string, Cardapio>();
@@ -48,6 +50,29 @@ export function criarRepositoriosEmMemoria(): Repositorios {
         const alvo = normalizarTexto(nome);
         return [...organizacoes.values()]
           .filter((o) => normalizarTexto(o.nomeFantasia) === alvo || normalizarTexto(o.razaoSocial) === alvo)
+          .map(copia);
+      },
+    },
+
+    equipe: {
+      async criar(dados) {
+        const membro = novo<MembroEquipe>(dados);
+        equipe.set(membro.id, membro);
+        return copia(membro);
+      },
+      async atualizar(membro) {
+        if (equipe.has(membro.id)) equipe.set(membro.id, copia(membro));
+      },
+      async buscarPorId(id) {
+        return copiaOuNulo(equipe.get(id));
+      },
+      async buscarPorEmail(email) {
+        return copiaOuNulo([...equipe.values()].find((m) => m.email === email));
+      },
+      async listarPorOrganizacao(organizacaoId) {
+        return [...equipe.values()]
+          .filter((m) => m.organizacaoId === organizacaoId)
+          .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
           .map(copia);
       },
     },

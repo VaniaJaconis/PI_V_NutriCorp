@@ -6,6 +6,8 @@ export interface SessaoUsuario {
   id: string;
   nome: string;
   perfil: 'colaborador' | 'organizacao';
+  papel?: 'rh' | 'cozinha';
+  membro?: boolean;
   organizacao: { id: string; nome: string };
 }
 export interface ResultadoLogin extends SessaoUsuario {

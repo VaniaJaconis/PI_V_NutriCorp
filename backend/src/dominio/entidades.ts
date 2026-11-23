@@ -1,5 +1,6 @@
 import type {
   EstadoCardapio,
+  PapelEquipe,
   PerfilAlimentar,
   RestricaoAlimentar,
   SituacaoCompatibilidade,
@@ -14,6 +15,17 @@ export interface Organizacao {
   setor: string;
   emailComunicacao: string;
   senhaHash: string;
+  criadoEm: string;
+}
+
+export interface MembroEquipe {
+  id: string;
+  organizacaoId: string;
+  nome: string;
+  email: string;
+  senhaHash: string;
+  papel: PapelEquipe;
+  ativo: boolean;
   criadoEm: string;
 }
 

@@ -5,7 +5,7 @@ import type {
   ResultadoLoginDto,
   SessaoDto,
 } from '../contratos/contas.js';
-import type { Organizacao } from '../dominio/entidades.js';
+import type { MembroEquipe, Organizacao } from '../dominio/entidades.js';
 import type { PerfilAcesso } from '../dominio/valores.js';
 import { erros } from '../erros.js';
 import type { Repositorios } from '../repositorios/tipos.js';
@@ -21,7 +21,8 @@ export function criarServicoContas(repos: Repositorios, tokens: ServicoTokens) {
   async function emailEmUso(email: string) {
     return Boolean(
       (await repos.colaboradores.buscarPorEmail(email)) ??
-        (await repos.organizacoes.buscarPorEmail(email)),
+        (await repos.organizacoes.buscarPorEmail(email)) ??
+        (await repos.equipe.buscarPorEmail(email)),
     );
   }
 
@@ -30,13 +31,16 @@ export function criarServicoContas(repos: Repositorios, tokens: ServicoTokens) {
     nome: string,
     perfil: PerfilAcesso,
     organizacao: Organizacao,
+    membro?: MembroEquipe,
   ): ResultadoLoginDto {
     return {
       id,
       nome,
       perfil,
+      ...(perfil === 'organizacao' && { papel: membro?.papel ?? 'rh' }),
+      ...(membro && { membro: true }),
       organizacao: { id: organizacao.id, nome: organizacao.nomeFantasia },
-      ...tokens.emitir({ id, perfil }),
+      ...tokens.emitir({ id, perfil, membro: Boolean(membro) }),
       modo: 'api',
     };
   }
@@ -116,20 +120,33 @@ export function criarServicoContas(repos: Repositorios, tokens: ServicoTokens) {
     async entrar({ usuario, senha }: CredenciaisDto) {
       const email = usuario.toLowerCase();
       const colaborador = await repos.colaboradores.buscarPorEmail(email);
-      const organizacao = colaborador
-        ? await repos.organizacoes.buscarPorId(colaborador.organizacaoId)
-        : await repos.organizacoes.buscarPorEmail(email);
-      const hash = colaborador?.senhaHash ?? organizacao?.senhaHash;
+      const titular = colaborador ? null : await repos.organizacoes.buscarPorEmail(email);
+      const membro = colaborador || titular ? null : await repos.equipe.buscarPorEmail(email);
+      const organizacaoId = colaborador?.organizacaoId ?? membro?.organizacaoId;
+      const organizacao = titular ?? (organizacaoId ? await repos.organizacoes.buscarPorId(organizacaoId) : null);
+      const hash = colaborador?.senhaHash ?? membro?.senhaHash ?? titular?.senhaHash;
       const senhaCorreta = await conferirSenha(senha, hash ?? (await obterHashFicticio()));
       if (!hash || !senhaCorreta || !organizacao) throw erros.credenciaisInvalidas();
-      if (!colaborador)
+      if (titular)
         return autenticar(organizacao.id, organizacao.nomeFantasia, 'organizacao', organizacao);
-      if (!colaborador.aprovado) throw erros.acessoPendente();
-      if (!colaborador.ativo) throw erros.acessoInativo();
-      return autenticar(colaborador.id, colaborador.nomeCompleto, 'colaborador', organizacao);
+      if (membro) {
+        if (!membro.ativo) throw erros.acessoInativo();
+        return autenticar(membro.id, membro.nome, 'organizacao', organizacao, membro);
+      }
+      if (!colaborador!.aprovado) throw erros.acessoPendente();
+      if (!colaborador!.ativo) throw erros.acessoInativo();
+      return autenticar(colaborador!.id, colaborador!.nomeCompleto, 'colaborador', organizacao);
     },
 
     async alterarSenha(sessao: SessaoDto, senhaAtual: string, novaSenha: string) {
+      if (sessao.membro) {
+        const membro = await repos.equipe.buscarPorId(sessao.id);
+        if (!membro || !(await conferirSenha(senhaAtual, membro.senhaHash)))
+          throw erros.validacao({ senhaAtual: 'Senha atual incorreta.' });
+        membro.senhaHash = await gerarHashSenha(novaSenha);
+        await repos.equipe.atualizar(membro);
+        return;
+      }
       if (sessao.perfil === 'organizacao') {
         const organizacao = await repos.organizacoes.buscarPorId(sessao.id);
         if (!organizacao || !(await conferirSenha(senhaAtual, organizacao.senhaHash)))
@@ -144,7 +161,23 @@ export function criarServicoContas(repos: Repositorios, tokens: ServicoTokens) {
       await repos.colaboradores.atualizar(colaborador);
     },
 
-    async carregarSessao({ id, perfil }: DadosToken): Promise<SessaoDto | null> {
+    async carregarSessao({ id, perfil, membro }: DadosToken): Promise<SessaoDto | null> {
+      if (perfil === 'organizacao' && membro) {
+        const m = await repos.equipe.buscarPorId(id);
+        if (!m) return null;
+        if (!m.ativo) throw erros.acessoInativo();
+        const organizacao = await repos.organizacoes.buscarPorId(m.organizacaoId);
+        return organizacao
+          ? {
+              id,
+              nome: m.nome,
+              perfil,
+              papel: m.papel,
+              membro: true,
+              organizacao: { id: organizacao.id, nome: organizacao.nomeFantasia },
+            }
+          : null;
+      }
       if (perfil === 'organizacao') {
         const organizacao = await repos.organizacoes.buscarPorId(id);
         return organizacao
@@ -152,6 +185,7 @@ export function criarServicoContas(repos: Repositorios, tokens: ServicoTokens) {
               id,
               nome: organizacao.nomeFantasia,
               perfil,
+              papel: 'rh',
               organizacao: { id, nome: organizacao.nomeFantasia },
             }
           : null;

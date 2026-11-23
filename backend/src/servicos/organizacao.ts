@@ -5,7 +5,8 @@ import {
   type FiltroIndicadoresDto,
   type IndicadoresDto,
 } from '../contratos/organizacao.js';
-import type { Colaborador } from '../dominio/entidades.js';
+import type { Colaborador, MembroEquipe } from '../dominio/entidades.js';
+import type { MembroEquipeResumoDto, NovoMembroEquipeDto } from '../contratos/contas.js';
 import { erros } from '../erros.js';
 import type { Repositorios } from '../repositorios/tipos.js';
 import { contarDias, diaSemanaCurto, diasNoIntervalo, hoje, somarDias } from '../util/datas.js';
@@ -36,12 +37,23 @@ function resumo(colaborador: Colaborador): ColaboradorResumoDto {
   return { id, nomeCompleto, emailCorporativo, setor, codigoFuncionario, ativo, aprovado, criadoEm };
 }
 
+function resumoMembro({ id, nome, email, papel, ativo }: MembroEquipe): MembroEquipeResumoDto {
+  return { id, nome, email, papel, ativo, titular: false };
+}
+
 export function criarServicoOrganizacao(repos: Repositorios) {
   async function daOrganizacao(organizacaoId: string, colaboradorId: string) {
     const colaborador = await repos.colaboradores.buscarPorId(colaboradorId);
     if (!colaborador || colaborador.organizacaoId !== organizacaoId)
       throw erros.naoEncontrado('Colaborador não encontrado.');
     return colaborador;
+  }
+
+  async function membroDaOrganizacao(organizacaoId: string, id: string) {
+    const membro = await repos.equipe.buscarPorId(id);
+    if (!membro || membro.organizacaoId !== organizacaoId)
+      throw erros.naoEncontrado('Membro da equipe não encontrado.');
+    return membro;
   }
 
   return {
@@ -120,6 +132,59 @@ export function criarServicoOrganizacao(repos: Repositorios) {
       const senhaTemporaria = randomBytes(9).toString('base64url');
       colaborador.senhaHash = await gerarHashSenha(senhaTemporaria);
       await repos.colaboradores.atualizar(colaborador);
+      return { senhaTemporaria };
+    },
+
+    async listarEquipe(organizacaoId: string): Promise<MembroEquipeResumoDto[]> {
+      const organizacao = await repos.organizacoes.buscarPorId(organizacaoId);
+      const membros = await repos.equipe.listarPorOrganizacao(organizacaoId);
+      return [
+        ...(organizacao
+          ? [{
+              id: organizacao.id,
+              nome: organizacao.nomeFantasia,
+              email: organizacao.emailComunicacao,
+              papel: 'rh' as const,
+              ativo: true,
+              titular: true,
+            }]
+          : []),
+        ...membros.map(resumoMembro),
+      ];
+    },
+
+    async adicionarMembro(organizacaoId: string, dados: NovoMembroEquipeDto) {
+      const email = dados.email.toLowerCase();
+      const emUso =
+        (await repos.colaboradores.buscarPorEmail(email)) ??
+        (await repos.organizacoes.buscarPorEmail(email)) ??
+        (await repos.equipe.buscarPorEmail(email));
+      if (emUso) throw erros.conflito({ email: 'E-mail já cadastrado.' });
+      const senhaTemporaria = randomBytes(9).toString('base64url');
+      const membro = await repos.equipe.criar({
+        organizacaoId,
+        nome: dados.nome,
+        email,
+        papel: dados.papel,
+        senhaHash: await gerarHashSenha(senhaTemporaria),
+        ativo: true,
+        criadoEm: new Date().toISOString(),
+      });
+      return { membro: resumoMembro(membro), senhaTemporaria };
+    },
+
+    async alterarMembro(organizacaoId: string, id: string, ativo: boolean) {
+      const membro = await membroDaOrganizacao(organizacaoId, id);
+      membro.ativo = ativo;
+      await repos.equipe.atualizar(membro);
+      return resumoMembro(membro);
+    },
+
+    async redefinirSenhaMembro(organizacaoId: string, id: string) {
+      const membro = await membroDaOrganizacao(organizacaoId, id);
+      const senhaTemporaria = randomBytes(9).toString('base64url');
+      membro.senhaHash = await gerarHashSenha(senhaTemporaria);
+      await repos.equipe.atualizar(membro);
       return { senhaTemporaria };
     },
   };

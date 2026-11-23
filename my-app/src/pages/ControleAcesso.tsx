@@ -10,6 +10,7 @@ import {
   type PerfilAcesso,
 } from '../types/controleAcesso';
 import '../styles/controle-acesso.css';
+import EquipeOrganizacao from '../components/EquipeOrganizacao';
 
 export default function ControleAcesso({ nome }: { nome: string }) {
   const [colaboradores, setColaboradores] = useState<ColaboradorAcesso[]>([]);
@@ -210,6 +211,7 @@ export default function ControleAcesso({ nome }: { nome: string }) {
           </div>
         )}
       </section>
+      <EquipeOrganizacao />
     </main>
   );
 }

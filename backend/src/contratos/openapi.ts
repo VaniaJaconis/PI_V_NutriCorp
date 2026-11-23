@@ -17,10 +17,14 @@ import { ParametroId, RespostaErro } from './comum.js';
 import {
   Credenciais,
   EntradaAlterarSenha,
+  MembroEquipeResumo,
   NovaOrganizacao,
   NovoColaborador,
+  NovoMembroEquipe,
   ResultadoCadastroColaborador,
+  ResultadoConsultaCnpj,
   ResultadoLogin,
+  ResultadoNovoMembro,
   Sessao,
 } from './contas.js';
 import {
@@ -84,6 +88,25 @@ export function gerarDocumentoOpenApi() {
       tags: ['Infraestrutura'],
       summary: 'Verificar se a API está no ar',
       responses: { 200: json(z.object({ status: z.literal('ok') }), 'API disponível.') },
+    },
+    true,
+  );
+  rota(
+    {
+      method: 'get',
+      path: '/api/cnpj/{cnpj}',
+      tags: ['Cadastro e acesso'],
+      summary: 'Consultar CNPJ na Receita (ReceitaWS)',
+      description:
+        'Usado no cadastro da organização para preencher razão social, nome fantasia e setor. Só CNPJ numérico. Resultados ficam em cache.',
+      request: { params: z.object({ cnpj: z.string().meta({ example: '00.000.000/0001-91' }) }) },
+      responses: {
+        200: json(ResultadoConsultaCnpj, 'Dados encontrados.'),
+        404: erro('CNPJ não encontrado na Receita Federal.'),
+        422: E422,
+        429: erro('Muitas consultas.'),
+        503: erro('ReceitaWS indisponível ou limite de consultas atingido.'),
+      },
     },
     true,
   );
@@ -389,6 +412,44 @@ export function gerarDocumentoOpenApi() {
       404: E404,
     },
   });
+  rota({
+    method: 'get',
+    path: '/api/organizacao/equipe',
+    tags: ['Organização'],
+    summary: 'Listar a equipe (RH e Cozinha)',
+    description: 'Só RH. A conta titular vem primeiro, com "titular": true.',
+    responses: { 200: json(z.array(MembroEquipeResumo), 'Equipe.'), ...soOrganizacao },
+  });
+  rota({
+    method: 'post',
+    path: '/api/organizacao/equipe',
+    tags: ['Organização'],
+    summary: 'Adicionar pessoa do RH ou da Cozinha',
+    description: 'Só RH. Devolve uma senha temporária para repassar à pessoa.',
+    request: corpo(NovoMembroEquipe),
+    responses: {
+      201: json(ResultadoNovoMembro, 'Membro criado.'),
+      ...soOrganizacao,
+      409: erro('E-mail já cadastrado.'),
+      422: E422,
+    },
+  });
+  rota({
+    method: 'patch',
+    path: '/api/organizacao/equipe/{id}',
+    tags: ['Organização'],
+    summary: 'Ativar ou desativar membro da equipe',
+    request: { params: ParametroId, ...corpo(EntradaAcesso) },
+    responses: { 200: json(MembroEquipeResumo, 'Atualizado.'), ...soOrganizacao, 404: E404, 422: E422 },
+  });
+  rota({
+    method: 'post',
+    path: '/api/organizacao/equipe/{id}/senha',
+    tags: ['Organização'],
+    summary: 'Gerar senha temporária para membro da equipe',
+    request: { params: ParametroId },
+    responses: { 200: json(ResultadoSenhaTemporaria, 'Senha gerada.'), ...soOrganizacao, 404: E404 },
+  });
 
   return new OpenApiGeneratorV3(registro.definitions).generateDocument({
     openapi: '3.0.3',
@@ -403,7 +464,11 @@ export function gerarDocumentoOpenApi() {
       { name: 'Cadastro e acesso' },
       { name: 'Cardápios' },
       { name: 'Colaborador', description: 'Exige perfil "colaborador".' },
-      { name: 'Organização', description: 'Exige perfil "organizacao".' },
+      {
+        name: 'Organização',
+        description:
+          'Exige perfil "organizacao". RH: controle de acesso, equipe e indicadores (cardápios só consulta). Cozinha: cadastro de cardápios e indicadores.',
+      },
       { name: 'Infraestrutura' },
     ],
   });

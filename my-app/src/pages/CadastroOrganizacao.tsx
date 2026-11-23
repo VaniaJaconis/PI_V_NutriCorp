@@ -1,9 +1,10 @@
 import { useRef, useState, type FormEvent } from 'react';
 import type { NovaOrganizacao } from '../types/organizacao';
-import { cadastrarOrganizacao } from '../services/organizacoes';
+import { cadastrarOrganizacao, consultarCnpj } from '../services/organizacoes';
 import { ErroApi } from '../services/api';
 import type { ResultadoLogin } from '../types/autenticacao';
 import {
+  cnpjValido,
   formatarCnpj,
   normalizarCnpj,
   validarOrganizacao,
@@ -20,8 +21,8 @@ const vazio: NovaOrganizacao = {
   senha: '',
 };
 const campos = [
-  { nome: 'razaoSocial', titulo: 'Razão Social', autocomplete: 'organization' },
   { nome: 'cnpj', titulo: 'CNPJ', autocomplete: 'off' },
+  { nome: 'razaoSocial', titulo: 'Razão Social', autocomplete: 'organization' },
   { nome: 'nomeFantasia', titulo: 'Nome Fantasia', autocomplete: 'off' },
   { nome: 'setor', titulo: 'Setor', autocomplete: 'off' },
   {
@@ -43,7 +44,36 @@ export default function CadastroOrganizacao({ onCadastroConcluido }: Props) {
     'inicial' | 'enviando' | 'sucesso' | 'erro'
   >('inicial');
   const [mensagem, setMensagem] = useState('');
+  const [consulta, setConsulta] = useState({ estado: '', texto: '' });
   const bloqueio = useRef(false);
+  const ultimaConsulta = useRef('');
+
+  async function buscarCnpj(cnpj: string) {
+    if (ultimaConsulta.current === cnpj) return;
+    ultimaConsulta.current = cnpj;
+    setConsulta({ estado: 'buscando', texto: 'Buscando dados na Receita…' });
+    try {
+      const encontrados = await consultarCnpj(cnpj);
+      if (ultimaConsulta.current !== cnpj) return;
+      setDados((anterior) => ({
+        ...anterior,
+        razaoSocial: encontrados.razaoSocial,
+        nomeFantasia: encontrados.nomeFantasia,
+        setor: encontrados.setor || anterior.setor,
+      }));
+      setErros((anterior) => ({ ...anterior, razaoSocial: undefined, nomeFantasia: undefined, setor: undefined }));
+      setConsulta({
+        estado: 'ok',
+        texto: `Dados preenchidos pela Receita Federal${encontrados.situacao && encontrados.situacao !== 'ATIVA' ? ` (situação: ${encontrados.situacao})` : ''}. Confira e ajuste se precisar.`,
+      });
+    } catch (erro) {
+      if (ultimaConsulta.current !== cnpj) return;
+      setConsulta({
+        estado: 'erro',
+        texto: erro instanceof ErroApi ? erro.message : 'Não foi possível consultar o CNPJ. Preencha os dados manualmente.',
+      });
+    }
+  }
 
   function alterar(campo: keyof NovaOrganizacao, valor: string) {
     setDados((anterior) => ({
@@ -54,6 +84,14 @@ export default function CadastroOrganizacao({ onCadastroConcluido }: Props) {
     if (estado === 'erro') {
       setEstado('inicial');
       setMensagem('');
+    }
+    if (campo === 'cnpj') {
+      const cnpj = normalizarCnpj(valor);
+      if (/^\d{14}$/.test(cnpj) && cnpjValido(cnpj)) void buscarCnpj(cnpj);
+      else {
+        ultimaConsulta.current = '';
+        setConsulta({ estado: '', texto: '' });
+      }
     }
   }
   async function enviar(evento: FormEvent<HTMLFormElement>) {
@@ -172,6 +210,11 @@ export default function CadastroOrganizacao({ onCadastroConcluido }: Props) {
                     {erros[nome] && (
                       <span className="erro-campo" id={`${id}-erro`}>
                         {erros[nome]}
+                      </span>
+                    )}
+                    {nome === 'cnpj' && consulta.texto && (
+                      <span className={`consulta-cnpj consulta-cnpj-${consulta.estado}`} role="status">
+                        {consulta.texto}
                       </span>
                     )}
                   </div>

@@ -4,6 +4,7 @@ import pg from 'pg';
 import type {
   Cardapio,
   Colaborador,
+  MembroEquipe,
   Organizacao,
   RegistroRefeicao,
 } from '../../dominio/entidades.js';
@@ -98,6 +99,27 @@ function paraOrganizacao(r: Record<string, any>): Organizacao {
     setor: r.setor,
     emailComunicacao: r.email,
     senhaHash: r.senha_hash,
+    criadoEm: r.criado_em,
+  };
+}
+
+const SQL_EQUIPE = `
+  SELECT u.id_usuario::text AS id, u.id_organizacao::text AS organizacao_id, u.nome, u.email,
+         u.senha_hash, u.papel, u.ativo, u.criado_em
+  FROM ${n('usuarios')} u
+  WHERE u.papel IN ('rh', 'cozinha') AND u.id_usuario <> (
+    SELECT min(t.id_usuario) FROM ${n('usuarios')} t
+    WHERE t.id_organizacao = u.id_organizacao AND t.papel = 'rh')`;
+
+function paraMembro(r: Record<string, any>): MembroEquipe {
+  return {
+    id: r.id,
+    organizacaoId: r.organizacao_id,
+    nome: r.nome,
+    email: r.email,
+    senhaHash: r.senha_hash,
+    papel: r.papel,
+    ativo: r.ativo,
     criadoEm: r.criado_em,
   };
 }
@@ -298,6 +320,34 @@ export function criarRepositoriosPostgres(pool: pg.Pool): Repositorios {
         return todas.filter(
           (o) => normalizarTexto(o.nomeFantasia) === alvo || normalizarTexto(o.razaoSocial) === alvo,
         );
+      },
+    },
+
+    equipe: {
+      async criar(dados) {
+        const { rows } = await pool.query(
+          `INSERT INTO ${n('usuarios')} (id_organizacao, nome, email, senha_hash, papel, ativo, criado_em)
+           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id_usuario::text AS id`,
+          [dados.organizacaoId, dados.nome, dados.email, dados.senhaHash, dados.papel, dados.ativo, dados.criadoEm],
+        );
+        return { ...dados, id: rows[0].id };
+      },
+      async atualizar(m) {
+        await pool.query(
+          `UPDATE ${n('usuarios')} SET nome = $2, papel = $3, ativo = $4, senha_hash = $5
+           WHERE id_usuario = $1 AND papel IN ('rh', 'cozinha')`,
+          [m.id, m.nome, m.papel, m.ativo, m.senhaHash],
+        );
+      },
+      async buscarPorId(id) {
+        if (!idValido(id)) return null;
+        return um(`${SQL_EQUIPE} AND u.id_usuario = $1`, [id], paraMembro);
+      },
+      async buscarPorEmail(email) {
+        return um(`${SQL_EQUIPE} AND lower(u.email) = lower($1)`, [email], paraMembro);
+      },
+      async listarPorOrganizacao(organizacaoId) {
+        return varios(`${SQL_EQUIPE} AND u.id_organizacao = $1 ORDER BY u.nome`, [organizacaoId], paraMembro);
       },
     },
 

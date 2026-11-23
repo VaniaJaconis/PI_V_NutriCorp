@@ -158,12 +158,23 @@ export default function App() {
   if (sessao) {
     if (caminho === '/organizacao/senha' || caminho === '/colaborador/senha')
       return <AlterarSenha voltar={'/' + sessao.perfil} />;
+    const papel = sessao.papel ?? 'rh';
+    if (
+      (caminho === '/organizacao/acessos' && papel !== 'rh') ||
+      (caminho === '/organizacao/cardapios/cadastro' && papel !== 'cozinha')
+    )
+      return (
+        <TelaPendente
+          titulo="Sem permissão"
+          mensagem={`Esta área não está disponível para o perfil ${papel === 'rh' ? 'RH' : 'Cozinha'}.`}
+        />
+      );
     if (caminho === '/organizacao')
-      return <InicioOrganizacao nome={sessao.nome} onSair={() => encerrarSessao()} />;
+      return <InicioOrganizacao nome={sessao.nome} papel={papel} onSair={() => encerrarSessao()} />;
     if (caminho === '/organizacao/acessos')
       return <ControleAcesso nome={sessao.nome} />;
     if (caminho === '/organizacao/cardapios')
-      return <CardapiosOrganizacao />;
+      return <CardapiosOrganizacao podeEditar={papel === 'cozinha'} />;
     if (caminho === '/organizacao/cardapios/cadastro') {
       const cardapioId = parametros.get('id') ?? '';
       return <CadastroCardapio key={cardapioId} cardapioId={cardapioId} nomeOrganizacao={sessao.organizacao.nome} />;

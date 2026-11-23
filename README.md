@@ -52,6 +52,8 @@ A primeira versão do NutriCorp contempla as funcionalidades essenciais para dem
 10. Painel básico com indicadores consolidados.
 
 ### Recursos complementares
+- Recursos Humanos e Cozinha com perfis e permissões separados na mesma organização.
+- Preenchimento automático da razão social, do nome fantasia e do setor a partir do CNPJ (consulta pública da ReceitaWS).
 - Aprovação, pela organização, do cadastro de novos colaboradores.
 - Senha temporária gerada pelo RH e troca de senha pelo próprio usuário.
 - Consentimento explícito para uso dos dados de saúde e exclusão desses dados a qualquer momento (LGPD).
@@ -63,8 +65,9 @@ A primeira versão do NutriCorp contempla as funcionalidades essenciais para dem
 Funcionalidades mais avançadas poderão ser incorporadas em versões futuras, como integração com sistemas corporativos, integração com restaurantes externos e recursos analíticos mais avançados.
 
 ## Perfis de Acesso
-- **Organização (RH e cozinha):** cadastra cardápios, aprova e gerencia o acesso dos colaboradores e consulta indicadores agregados.
-- **Colaborador:** registra preferências e restrições, consulta cardápios e compatibilidade e registra as refeições consumidas. O acesso é liberado após a aprovação da organização.
+- **RH:** aprova e gerencia o acesso dos colaboradores, cadastra a equipe (outras pessoas do RH e da Cozinha), consulta cardápios e indicadores agregados. A conta criada no cadastro da organização é do RH.
+- **Cozinha:** cadastra e publica cardápios com as informações nutricionais e consulta os indicadores agregados.
+- **Colaborador:** registra preferências e restrições, consulta cardápios e compatibilidade e registra as refeições consumidas. O acesso é liberado após a aprovação do RH.
 
 ## Privacidade e LGPD
 Preferências e restrições alimentares são dados de saúde. O colaborador autoriza o uso antes de salvar e pode excluí-los quando quiser. A organização acessa apenas indicadores agregados, nunca as escolhas individuais.
@@ -143,7 +146,7 @@ npm run dev          # front-end no endereço indicado pelo Vite
 
 Sem `DATABASE_URL`, a API usa dados em memória com uma base de demonstração. Com `DATABASE_URL`, as migrações de `database/migrations` são aplicadas automaticamente. Detalhes em [backend/README.md](backend/README.md).
 
-Contas de demonstração (senha `NutriCorp123!`): `organizacao@nutricorp.dev`, `colaborador@nutricorp.dev`, `bruno.lima@nutricorp.dev`, `carla.mendes@nutricorp.dev` (acesso desativado) e `diego.rocha@nutricorp.dev` (aguardando aprovação).
+Contas de demonstração (senha `NutriCorp123!`): `organizacao@nutricorp.dev` (RH), `cozinha@nutricorp.dev` (Cozinha), `colaborador@nutricorp.dev`, `bruno.lima@nutricorp.dev`, `carla.mendes@nutricorp.dev` (acesso desativado) e `diego.rocha@nutricorp.dev` (aguardando aprovação).
 
 ### Publicação (Railway)
 

@@ -8,8 +8,9 @@ import {
   MSG_OBRIGATORIO,
 } from './comum.js';
 import { cnpjValido, cpfValido } from '../util/documentos.js';
+import { PAPEIS_EQUIPE } from '../dominio/valores.js';
 
-const Email = z
+export const Email = z
   .string({ error: MSG_OBRIGATORIO })
   .trim()
   .min(1, { error: MSG_OBRIGATORIO })
@@ -82,11 +83,22 @@ export const Credenciais = z
 
 const OrganizacaoResumo = z.object({ id: Id, nome: z.string() });
 
+export const PapelEquipe = z
+  .enum(PAPEIS_EQUIPE, { error: 'Selecione RH ou Cozinha.' })
+  .meta({
+    id: 'PapelEquipe',
+    description: 'rh: controle de acesso e indicadores. cozinha: cadastro de cardápios e indicadores.',
+  });
+
 export const Sessao = z
   .object({
     id: Id,
     nome: z.string().meta({ example: 'Ana Souza' }),
     perfil: PerfilAcesso,
+    papel: PapelEquipe.optional().meta({ description: 'Só no perfil organizacao.' }),
+    membro: z.boolean().optional().meta({
+      description: 'true para contas da equipe criadas pela organização (não é a conta titular).',
+    }),
     organizacao: OrganizacaoResumo,
   })
   .meta({ id: 'Sessao' });
@@ -123,7 +135,47 @@ export const EntradaAlterarSenha = z
   })
   .meta({ id: 'EntradaAlterarSenha' });
 
+export const NovoMembroEquipe = z
+  .object({
+    nome: textoObrigatorio(200),
+    email: Email,
+    papel: PapelEquipe,
+  })
+  .meta({ id: 'NovoMembroEquipe' });
+
+export const MembroEquipeResumo = z
+  .object({
+    id: Id,
+    nome: z.string(),
+    email: z.string(),
+    papel: PapelEquipe,
+    ativo: z.boolean(),
+    titular: z.boolean().meta({
+      description: 'Conta criada no cadastro da organização. Não pode ser desativada.',
+    }),
+  })
+  .meta({ id: 'MembroEquipeResumo' });
+
+export const ResultadoNovoMembro = z
+  .object({ membro: MembroEquipeResumo, senhaTemporaria: z.string() })
+  .meta({ id: 'ResultadoNovoMembro' });
+
+export const ResultadoConsultaCnpj = z
+  .object({
+    cnpj: z.string().meta({ example: '00000000000191' }),
+    razaoSocial: z.string().meta({ example: 'BANCO DO BRASIL SA' }),
+    nomeFantasia: z.string().meta({ example: 'DIRECAO GERAL' }),
+    setor: z.string().meta({
+      description: 'Descrição da atividade principal (CNAE).',
+      example: 'Bancos múltiplos, com carteira comercial',
+    }),
+    situacao: z.string().meta({ example: 'ATIVA' }),
+  })
+  .meta({ id: 'ResultadoConsultaCnpj' });
+
 export type NovaOrganizacaoDto = z.infer<typeof NovaOrganizacao>;
+export type NovoMembroEquipeDto = z.infer<typeof NovoMembroEquipe>;
+export type MembroEquipeResumoDto = z.infer<typeof MembroEquipeResumo>;
 export type NovoColaboradorDto = z.infer<typeof NovoColaborador>;
 export type CredenciaisDto = z.infer<typeof Credenciais>;
 export type SessaoDto = z.infer<typeof Sessao>;

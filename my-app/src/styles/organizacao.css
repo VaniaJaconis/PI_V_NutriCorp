@@ -36,3 +36,16 @@
     padding-top: 32px;
   }
 }
+.consulta-cnpj {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #555;
+}
+.consulta-cnpj-ok {
+  color: var(--verde);
+}
+.consulta-cnpj-erro {
+  color: #b3261e;
+}

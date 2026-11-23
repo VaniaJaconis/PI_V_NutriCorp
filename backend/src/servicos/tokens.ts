@@ -5,13 +5,14 @@ import { PERFIS_ACESSO, type PerfilAcesso } from '../dominio/valores.js';
 export interface DadosToken {
   id: string;
   perfil: PerfilAcesso;
+  membro?: boolean;
 }
 
 export function criarServicoTokens(config: Config) {
   const validadeSegundos = Math.round(config.tokenValidadeHoras * 3600);
   return {
-    emitir({ id, perfil }: DadosToken) {
-      const token = jwt.sign({ perfil }, config.jwtSegredo, {
+    emitir({ id, perfil, membro }: DadosToken) {
+      const token = jwt.sign({ perfil, ...(membro && { membro }) }, config.jwtSegredo, {
         subject: id,
         expiresIn: validadeSegundos,
         algorithm: 'HS256',
@@ -27,7 +28,7 @@ export function criarServicoTokens(config: Config) {
         if (typeof dados === 'string' || !dados.sub) return null;
         const perfil = dados.perfil as PerfilAcesso;
         if (!PERFIS_ACESSO.includes(perfil)) return null;
-        return { id: dados.sub, perfil };
+        return { id: dados.sub, perfil, membro: dados.membro === true };
       } catch {
         return null;
       }

@@ -13,8 +13,14 @@
   line-height: 24px;
   font-weight: 750;
   text-align: center;
-  margin: 0 0 24px;
+  margin: 0 0 4px;
   overflow-wrap: anywhere;
+}
+.inicio-papel {
+  margin: 0 0 24px;
+  text-align: center;
+  font-size: 14px;
+  color: #555;
 }
 .organizacao-menu {
   display: flex;

@@ -1,6 +1,9 @@
 export const PERFIS_ACESSO = ['colaborador', 'organizacao'] as const;
 export type PerfilAcesso = (typeof PERFIS_ACESSO)[number];
 
+export const PAPEIS_EQUIPE = ['rh', 'cozinha'] as const;
+export type PapelEquipe = (typeof PAPEIS_EQUIPE)[number];
+
 export const TIPOS_REFEICAO = [
   'Café da manhã',
   'Almoço',

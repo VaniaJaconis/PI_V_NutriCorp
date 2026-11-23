@@ -23,7 +23,7 @@
     },
     {
       "name": "Organização",
-      "description": "Exige perfil \"organizacao\"."
+      "description": "Exige perfil \"organizacao\". RH: controle de acesso, equipe e indicadores (cardápios só consulta). Cozinha: cadastro de cardápios e indicadores."
     },
     {
       "name": "Infraestrutura"
@@ -38,6 +38,74 @@
       }
     },
     "schemas": {
+      "ResultadoConsultaCnpj": {
+        "type": "object",
+        "properties": {
+          "cnpj": {
+            "type": "string",
+            "example": "00000000000191"
+          },
+          "razaoSocial": {
+            "type": "string",
+            "example": "BANCO DO BRASIL SA"
+          },
+          "nomeFantasia": {
+            "type": "string",
+            "example": "DIRECAO GERAL"
+          },
+          "setor": {
+            "type": "string",
+            "description": "Descrição da atividade principal (CNAE).",
+            "example": "Bancos múltiplos, com carteira comercial"
+          },
+          "situacao": {
+            "type": "string",
+            "example": "ATIVA"
+          }
+        },
+        "required": [
+          "cnpj",
+          "razaoSocial",
+          "nomeFantasia",
+          "setor",
+          "situacao"
+        ]
+      },
+      "Erro": {
+        "type": "object",
+        "properties": {
+          "erro": {
+            "type": "object",
+            "properties": {
+              "codigo": {
+                "type": "string",
+                "example": "validacao"
+              },
+              "mensagem": {
+                "type": "string",
+                "example": "Verifique os campos destacados."
+              },
+              "campos": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Mensagem por campo (caminho separado por ponto), pronta para exibir no formulário.",
+                "example": {
+                  "cpf": "Informe um CPF válido."
+                }
+              }
+            },
+            "required": [
+              "codigo",
+              "mensagem"
+            ]
+          }
+        },
+        "required": [
+          "erro"
+        ]
+      },
       "ResultadoLogin": {
         "type": "object",
         "properties": {
@@ -51,6 +119,18 @@
           },
           "perfil": {
             "$ref": "#/components/schemas/PerfilAcesso"
+          },
+          "papel": {
+            "type": "string",
+            "enum": [
+              "rh",
+              "cozinha"
+            ],
+            "description": "Só no perfil organizacao."
+          },
+          "membro": {
+            "type": "boolean",
+            "description": "true para contas da equipe criadas pela organização (não é a conta titular)."
           },
           "organizacao": {
             "type": "object",
@@ -101,41 +181,6 @@
         "enum": [
           "colaborador",
           "organizacao"
-        ]
-      },
-      "Erro": {
-        "type": "object",
-        "properties": {
-          "erro": {
-            "type": "object",
-            "properties": {
-              "codigo": {
-                "type": "string",
-                "example": "validacao"
-              },
-              "mensagem": {
-                "type": "string",
-                "example": "Verifique os campos destacados."
-              },
-              "campos": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Mensagem por campo (caminho separado por ponto), pronta para exibir no formulário.",
-                "example": {
-                  "cpf": "Informe um CPF válido."
-                }
-              }
-            },
-            "required": [
-              "codigo",
-              "mensagem"
-            ]
-          }
-        },
-        "required": [
-          "erro"
         ]
       },
       "NovaOrganizacao": {
@@ -329,6 +374,18 @@
           },
           "perfil": {
             "$ref": "#/components/schemas/PerfilAcesso"
+          },
+          "papel": {
+            "type": "string",
+            "enum": [
+              "rh",
+              "cozinha"
+            ],
+            "description": "Só no perfil organizacao."
+          },
+          "membro": {
+            "type": "boolean",
+            "description": "true para contas da equipe criadas pela organização (não é a conta titular)."
           },
           "organizacao": {
             "type": "object",
@@ -1419,6 +1476,88 @@
         "required": [
           "senhaTemporaria"
         ]
+      },
+      "MembroEquipeResumo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "papel": {
+            "$ref": "#/components/schemas/PapelEquipe"
+          },
+          "ativo": {
+            "type": "boolean"
+          },
+          "titular": {
+            "type": "boolean",
+            "description": "Conta criada no cadastro da organização. Não pode ser desativada."
+          }
+        },
+        "required": [
+          "id",
+          "nome",
+          "email",
+          "papel",
+          "ativo",
+          "titular"
+        ]
+      },
+      "PapelEquipe": {
+        "type": "string",
+        "enum": [
+          "rh",
+          "cozinha"
+        ],
+        "description": "rh: controle de acesso e indicadores. cozinha: cadastro de cardápios e indicadores."
+      },
+      "ResultadoNovoMembro": {
+        "type": "object",
+        "properties": {
+          "membro": {
+            "$ref": "#/components/schemas/MembroEquipeResumo"
+          },
+          "senhaTemporaria": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "membro",
+          "senhaTemporaria"
+        ]
+      },
+      "NovoMembroEquipe": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "email": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 254,
+            "format": "email",
+            "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+            "example": "ana.souza@empresa.com.br"
+          },
+          "papel": {
+            "$ref": "#/components/schemas/PapelEquipe"
+          }
+        },
+        "required": [
+          "nome",
+          "email",
+          "papel"
+        ]
       }
     },
     "parameters": {}
@@ -1448,6 +1587,78 @@
                   "required": [
                     "status"
                   ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cnpj/{cnpj}": {
+      "get": {
+        "tags": [
+          "Cadastro e acesso"
+        ],
+        "summary": "Consultar CNPJ na Receita (ReceitaWS)",
+        "description": "Usado no cadastro da organização para preencher razão social, nome fantasia e setor. Só CNPJ numérico. Resultados ficam em cache.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "00.000.000/0001-91"
+            },
+            "required": true,
+            "name": "cnpj",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados encontrados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoConsultaCnpj"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "CNPJ não encontrado na Receita Federal.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Muitas consultas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ReceitaWS indisponível ou limite de consultas atingido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
                 }
               }
             }
@@ -3111,6 +3322,281 @@
         "responses": {
           "200": {
             "description": "Senha gerada. Repasse ao colaborador.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoSenhaTemporaria"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado (ou de outra organização).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizacao/equipe": {
+      "get": {
+        "tags": [
+          "Organização"
+        ],
+        "summary": "Listar a equipe (RH e Cozinha)",
+        "description": "Só RH. A conta titular vem primeiro, com \"titular\": true.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Equipe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MembroEquipeResumo"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Organização"
+        ],
+        "summary": "Adicionar pessoa do RH ou da Cozinha",
+        "description": "Só RH. Devolve uma senha temporária para repassar à pessoa.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovoMembroEquipe"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Membro criado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoNovoMembro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "E-mail já cadastrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizacao/equipe/{id}": {
+      "patch": {
+        "tags": [
+          "Organização"
+        ],
+        "summary": "Ativar ou desativar membro da equipe",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntradaAcesso"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Atualizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembroEquipeResumo"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado (ou de outra organização).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizacao/equipe/{id}/senha": {
+      "post": {
+        "tags": [
+          "Organização"
+        ],
+        "summary": "Gerar senha temporária para membro da equipe",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Senha gerada.",
             "content": {
               "application/json": {
                 "schema": {

@@ -192,3 +192,29 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+.controle-acesso-conteudo + .controle-acesso-conteudo {
+  margin-top: 40px;
+}
+.equipe-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+.equipe-form input,
+.equipe-form select {
+  flex: 1 1 180px;
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 1px solid #bdc6b8;
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  font-size: 14px;
+}
+.equipe-form button {
+  width: auto;
+  min-height: 38px;
+  padding: 6px 18px;
+  font-size: 15px;
+}

@@ -1,6 +1,7 @@
 import type { EntradaCardapioDto } from './contratos/cardapios.js';
 import type { Repositorios } from './repositorios/tipos.js';
 import type { Servicos } from './servicos/index.js';
+import { gerarHashSenha } from './servicos/senhas.js';
 import { hoje, somarDias } from './util/datas.js';
 
 const SENHA = 'NutriCorp123!';
@@ -112,6 +113,17 @@ export async function popularDadosDemo(servicos: Servicos, repos: Repositorios) 
   if (!(await repos.organizacoes.buscarPorCnpj(CNPJ))) await criarContas(servicos, repos);
   const organizacao = (await repos.organizacoes.buscarPorCnpj(CNPJ))!;
   const orgId = organizacao.id;
+
+  if (!(await repos.equipe.buscarPorEmail('cozinha@nutricorp.dev')))
+    await repos.equipe.criar({
+      organizacaoId: orgId,
+      nome: 'Marcos Oliveira',
+      email: 'cozinha@nutricorp.dev',
+      papel: 'cozinha',
+      senhaHash: await gerarHashSenha(SENHA),
+      ativo: true,
+      criadoEm: new Date().toISOString(),
+    });
 
   const dataHoje = hoje();
   const ids: Record<string, Record<string, string>> = {};

@@ -1,7 +1,7 @@
 import type { ErrorRequestHandler, RequestHandler, Response } from 'express';
 import type { SessaoDto } from '../contratos/contas.js';
 import type { z } from '../contratos/zod.js';
-import type { PerfilAcesso } from '../dominio/valores.js';
+import type { PapelEquipe, PerfilAcesso } from '../dominio/valores.js';
 import { ErroApi, erros } from '../erros.js';
 import type { Servicos } from '../servicos/index.js';
 
@@ -40,6 +40,14 @@ export function exigirSessao(servicos: Servicos): RequestHandler {
 export function exigirPerfil(perfil: PerfilAcesso): RequestHandler {
   return (_req, res, next) => {
     if (res.locals.sessao?.perfil !== perfil) throw erros.semPermissao();
+    next();
+  };
+}
+
+export function exigirPapel(...papeis: PapelEquipe[]): RequestHandler {
+  return (_req, res, next) => {
+    const papel = res.locals.sessao?.papel;
+    if (!papel || !papeis.includes(papel)) throw erros.semPermissao();
     next();
   };
 }

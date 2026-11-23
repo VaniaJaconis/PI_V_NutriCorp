@@ -4,7 +4,7 @@ import type { Refeicao } from '../types/cardapio';
 import FiltroDia, { diaInicial, diasDasRefeicoes } from '../components/FiltroDia';
 import '../styles/cardapios.css';
 
-export default function CardapiosOrganizacao() {
+export default function CardapiosOrganizacao({ podeEditar }: { podeEditar: boolean }) {
   const refeicaoInicialId = new URLSearchParams(
     window.location.hash.split('?')[1],
   ).get('refeicao');
@@ -84,14 +84,16 @@ export default function CardapiosOrganizacao() {
       <h1 className="visualmente-oculto" tabIndex={-1}>
         Cardápios
       </h1>
-      <nav className="cardapios-acoes" aria-label="Gerenciar cardápios">
-        <a href="#/organizacao/cardapios/cadastro">Cadastrar cardápio</a>
-        {refeicao && (
-          <a href={`#/organizacao/cardapios/cadastro?id=${encodeURIComponent(refeicao.id)}`}>
-            Editar cardápio selecionado
-          </a>
-        )}
-      </nav>
+      {podeEditar && (
+        <nav className="cardapios-acoes" aria-label="Gerenciar cardápios">
+          <a href="#/organizacao/cardapios/cadastro">Cadastrar cardápio</a>
+          {refeicao && (
+            <a href={`#/organizacao/cardapios/cadastro?id=${encodeURIComponent(refeicao.id)}`}>
+              Editar cardápio selecionado
+            </a>
+          )}
+        </nav>
+      )}
       {carregando ? (
         <p role="status">Carregando cardápios…</p>
       ) : erro ? (

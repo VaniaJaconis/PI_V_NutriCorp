@@ -13,7 +13,7 @@ import { hoje, somarDias } from '../src/util/datas.js';
 const bancos: [string, string][] = [['memória', '']];
 if (process.env.TEST_DATABASE_URL) bancos.push(['PostgreSQL', process.env.TEST_DATABASE_URL]);
 
-async function montar(url = '') {
+async function montar(url = '', buscarCnpj?: typeof fetch) {
   const config = carregarConfig({ NODE_ENV: 'test' });
   let repos: Repositorios;
   if (url) {
@@ -24,7 +24,7 @@ async function montar(url = '') {
   } else {
     repos = criarRepositoriosEmMemoria();
   }
-  const servicos = criarServicos(repos, config);
+  const servicos = criarServicos(repos, config, buscarCnpj);
   return { app: criarApp(servicos, config), servicos, repos };
 }
 
@@ -70,6 +70,7 @@ describe.each(bancos)('fluxo principal da API (%s)', (_nome, url) => {
   let repos: Repositorios;
   const api = () => request(app);
   let tokenOrg = '';
+  let tokenCozinha = '';
   let tokenColab = '';
   let colaboradorId = '';
   let tradicionalId = '';
@@ -109,6 +110,43 @@ describe.each(bancos)('fluxo principal da API (%s)', (_nome, url) => {
       .set(bearer(tokenOrg))
       .send({ ativo: true });
     expect(aprovado.body).toMatchObject({ aprovado: true, ativo: true });
+
+    const novo = await api()
+      .post('/api/organizacao/equipe')
+      .set(bearer(tokenOrg))
+      .send({ nome: 'Rita Cozinha', email: 'rita@alfa.com.br', papel: 'cozinha' });
+    expect(novo.status).toBe(201);
+    expect(novo.body.membro).toMatchObject({ papel: 'cozinha', ativo: true, titular: false });
+    const loginCozinha = await api()
+      .post('/api/auth/login')
+      .send({ usuario: 'rita@alfa.com.br', senha: novo.body.senhaTemporaria });
+    expect(loginCozinha.body).toMatchObject({ perfil: 'organizacao', papel: 'cozinha', nome: 'Rita Cozinha' });
+    tokenCozinha = loginCozinha.body.token;
+  });
+
+  it('separa as permissões de RH e Cozinha', async () => {
+    const cardapioRh = await api()
+      .post('/api/organizacao/cardapios')
+      .set(bearer(tokenOrg))
+      .send({ estado: 'rascunho', nome: 'Tentativa do RH' });
+    expect(cardapioRh.status).toBe(403);
+    expect((await api().get('/api/organizacao/cardapios').set(bearer(tokenOrg))).status).toBe(200);
+    expect((await api().get('/api/organizacao/colaboradores').set(bearer(tokenCozinha))).status).toBe(403);
+    expect((await api().get('/api/organizacao/equipe').set(bearer(tokenCozinha))).status).toBe(403);
+    expect((await api().get('/api/organizacao/indicadores').set(bearer(tokenCozinha))).status).toBe(200);
+
+    const sessao = await api().get('/api/auth/sessao').set(bearer(tokenOrg));
+    expect(sessao.body).toMatchObject({ papel: 'rh' });
+    const equipe = await api().get('/api/organizacao/equipe').set(bearer(tokenOrg));
+    expect(equipe.body.map((m: { papel: string; titular: boolean }) => [m.papel, m.titular])).toEqual([
+      ['rh', true],
+      ['cozinha', false],
+    ]);
+    const duplicado = await api()
+      .post('/api/organizacao/equipe')
+      .set(bearer(tokenOrg))
+      .send({ nome: 'Outra', email: colaborador.emailCorporativo, papel: 'rh' });
+    expect(duplicado.status).toBe(409);
   });
 
   it('valida o cadastro com mensagens por campo', async () => {
@@ -183,7 +221,7 @@ describe.each(bancos)('fluxo principal da API (%s)', (_nome, url) => {
   it('exige todos os campos para publicar, mas aceita rascunho só com nome', async () => {
     const incompleto = await api()
       .post('/api/organizacao/cardapios')
-      .set(bearer(tokenOrg))
+      .set(bearer(tokenCozinha))
       .send({ estado: 'publicado', nome: 'Sem dados' });
     expect(incompleto.status).toBe(422);
     expect(incompleto.body.erro.campos).toMatchObject({
@@ -194,7 +232,7 @@ describe.each(bancos)('fluxo principal da API (%s)', (_nome, url) => {
 
     const rascunho = await api()
       .post('/api/organizacao/cardapios')
-      .set(bearer(tokenOrg))
+      .set(bearer(tokenCozinha))
       .send({ estado: 'rascunho', nome: 'Rascunho' });
     expect(rascunho.status).toBe(201);
     expect(rascunho.body).toMatchObject({ estado: 'rascunho', publicadoEm: null });
@@ -203,7 +241,7 @@ describe.each(bancos)('fluxo principal da API (%s)', (_nome, url) => {
   it('publica cardápios e avalia a compatibilidade para o colaborador', async () => {
     const tradicional = await api()
       .post('/api/organizacao/cardapios')
-      .set(bearer(tokenOrg))
+      .set(bearer(tokenCozinha))
       .send({
         ...cardapioBase,
         nome: 'Tradicional',
@@ -216,7 +254,7 @@ describe.each(bancos)('fluxo principal da API (%s)', (_nome, url) => {
 
     const vegetariano = await api()
       .post('/api/organizacao/cardapios')
-      .set(bearer(tokenOrg))
+      .set(bearer(tokenCozinha))
       .send({
         ...cardapioBase,
         nome: 'Vegetariano',
@@ -404,6 +442,23 @@ describe.each(bancos)('fluxo principal da API (%s)', (_nome, url) => {
       .send({ usuario: colaborador.emailCorporativo, senha: SENHA });
     expect(login.body.erro.codigo).toBe('acesso_inativo');
   });
+
+  it('desativa e gera nova senha para a equipe', async () => {
+    const equipe = await api().get('/api/organizacao/equipe').set(bearer(tokenOrg));
+    const rita = equipe.body.find((m: { titular: boolean }) => !m.titular);
+    const senha = await api().post(`/api/organizacao/equipe/${rita.id}/senha`).set(bearer(tokenOrg));
+    const login = await api()
+      .post('/api/auth/login')
+      .send({ usuario: 'rita@alfa.com.br', senha: senha.body.senhaTemporaria });
+    expect(login.status).toBe(200);
+
+    await api().patch(`/api/organizacao/equipe/${rita.id}`).set(bearer(tokenOrg)).send({ ativo: false });
+    expect((await api().get('/api/organizacao/indicadores').set(bearer(login.body.token))).status).toBe(403);
+    expect(
+      (await api().patch(`/api/organizacao/equipe/${equipe.body[0].id}`).set(bearer(tokenOrg)).send({ ativo: false }))
+        .status,
+    ).toBe(404);
+  });
 });
 
 describe('infraestrutura', () => {
@@ -434,6 +489,48 @@ describe('infraestrutura', () => {
   });
 });
 
+describe('consulta de CNPJ (ReceitaWS simulada)', () => {
+  const resposta = (corpo: unknown, status = 200) =>
+    Promise.resolve(new Response(JSON.stringify(corpo), { status }));
+
+  it('preenche razão social, nome fantasia e setor e guarda em cache', async () => {
+    const chamadas: string[] = [];
+    const buscar = ((url: string) => {
+      chamadas.push(url);
+      return resposta({
+        status: 'OK',
+        nome: 'COZINHA BOA ALIMENTOS LTDA',
+        fantasia: '',
+        situacao: 'ATIVA',
+        atividade_principal: [{ code: '56.20-1-01', text: 'Fornecimento de alimentos preparados para empresas' }],
+      });
+    }) as typeof fetch;
+    const { app } = await montar('', buscar);
+    const primeira = await request(app).get('/api/cnpj/11.222.333%2F0001-81');
+    expect(primeira.body).toEqual({
+      cnpj: '11222333000181',
+      razaoSocial: 'COZINHA BOA ALIMENTOS LTDA',
+      nomeFantasia: 'Cozinha Boa Alimentos Ltda',
+      setor: 'Fornecimento de alimentos preparados para empresas',
+      situacao: 'ATIVA',
+    });
+    await request(app).get('/api/cnpj/11222333000181');
+    expect(chamadas).toEqual(['https://receitaws.com.br/v1/cnpj/11222333000181']);
+  });
+
+  it('trata CNPJ inválido, não encontrado e serviço fora do ar', async () => {
+    const naoEncontrado = (() => resposta({ status: 'ERROR', message: 'CNPJ inválido' })) as unknown as typeof fetch;
+    const foraDoAr = (() => resposta({}, 429)) as unknown as typeof fetch;
+    const app1 = (await montar('', naoEncontrado)).app;
+    expect((await request(app1).get('/api/cnpj/11111111111111')).status).toBe(422);
+    expect((await request(app1).get('/api/cnpj/44555666000181')).status).toBe(404);
+    const app2 = (await montar('', foraDoAr)).app;
+    const erro = await request(app2).get('/api/cnpj/44555666000181');
+    expect(erro.status).toBe(503);
+    expect(erro.body.erro.codigo).toBe('consulta_indisponivel');
+  });
+});
+
 describe.each(bancos)('dados de demonstração (%s)', (_nome, url) => {
   it('carrega uma única vez', async () => {
     const { app, servicos, repos } = await montar(url);
@@ -447,6 +544,10 @@ describe.each(bancos)('dados de demonstração (%s)', (_nome, url) => {
       .set({ Authorization: `Bearer ${login.body.token}` });
     expect(indicadores.body).toMatchObject({ colaboradoresAtivos: 2, taxaAdesao: 100 });
     expect(indicadores.body.refeicoesRegistradas).toBe(8);
+    const cozinha = await request(app)
+      .post('/api/auth/login')
+      .send({ usuario: 'cozinha@nutricorp.dev', senha: 'NutriCorp123!' });
+    expect(cozinha.body).toMatchObject({ perfil: 'organizacao', papel: 'cozinha' });
     await repos.encerrar?.();
   });
 });
