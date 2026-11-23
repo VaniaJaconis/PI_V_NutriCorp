@@ -1,16 +1,18 @@
 .inicio-organizacao {
   width: 100%;
-  max-width: 1319px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 48px 140px 80px 62px;
+  padding: 96px 24px 80px;
 }
 .inicio-organizacao .marca {
-  margin: 0 0 72px;
+  font-size: 72px;
+  margin: 0 0 48px;
 }
 .inicio-organizacao h1 {
-  font-size: 16px;
+  font-size: 18px;
   line-height: 24px;
   font-weight: 750;
+  text-align: center;
   margin: 0 0 24px;
   overflow-wrap: anywhere;
 }
@@ -19,6 +21,8 @@
   align-items: center;
   justify-content: center;
   gap: 34px;
+  max-width: 1120px;
+  margin: 0 auto;
   min-height: 208px;
   padding: 40px;
   background: #d9d9d9;
@@ -63,10 +67,11 @@
 }
 @media (max-width: 760px) {
   .inicio-organizacao {
-    padding: 26px 16px 48px;
+    padding: 88px 16px 48px;
   }
   .inicio-organizacao .marca {
-    margin-bottom: 50px;
+    font-size: 56px;
+    margin-bottom: 36px;
   }
   .organizacao-menu {
     flex-direction: column;

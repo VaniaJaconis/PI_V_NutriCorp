@@ -1,3 +1,5 @@
+import '../styles/colaborador.css';
+
 interface Props {
   nome: string;
   onSair: () => void;
@@ -19,10 +21,10 @@ export default function InicioColaborador({ nome, onSair }: Props) {
         <a className="acao-colaborador" href="#/colaborador/cardapios">
           Cardápios
         </a>
+        <a className="acao-colaborador" href="#/colaborador/refeicoes">
+          Registro de Refeições
+        </a>
       </nav>
-      <a className="registro-link registro-menu" href="#/colaborador/refeicoes">
-        Registrar refeição e consultar histórico
-      </a>
       <button className="sessao-sair" type="button" onClick={onSair}>Sair</button>
     </main>
   );

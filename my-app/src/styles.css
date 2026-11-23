@@ -14,15 +14,31 @@ body {
   min-width: 280px;
 }
 .sessao-sair {
-  display: block;
-  margin: 20px auto 0;
-  padding: 8px 14px;
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  min-height: 40px;
+  padding: 8px 16px 8px 12px;
   color: var(--verde);
-  border: 1px solid currentColor;
-  border-radius: 6px;
+  border: 2px solid currentColor;
+  border-radius: 999px;
   background: #fff;
   font: inherit;
+  font-size: 15px;
+  font-weight: 650;
   cursor: pointer;
+}
+.sessao-sair:hover {
+  background: #eef4ea;
+}
+.sessao-sair::before {
+  content: '←';
+  font-size: 18px;
+  line-height: 1;
 }
 .cadastro {
   max-width: 473px;

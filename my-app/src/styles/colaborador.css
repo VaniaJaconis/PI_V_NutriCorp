@@ -1,16 +1,18 @@
 .inicio-colaborador {
   width: 100%;
-  max-width: 824px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 29px 45px 80px 16px;
+  padding: 96px 24px 80px;
 }
 .inicio-colaborador .marca {
-  margin: 0 0 70px;
+  font-size: 72px;
+  margin: 0 0 48px;
 }
 .inicio-colaborador .saudacao-colaborador {
-  font-size: 16px;
+  font-size: 18px;
   line-height: 24px;
   font-weight: 750;
+  text-align: center;
   margin: 0 0 24px;
   overflow-wrap: anywhere;
 }
@@ -22,6 +24,8 @@ h1[tabindex='-1']:focus {
   align-items: center;
   justify-content: center;
   gap: 34px;
+  max-width: 1120px;
+  margin: 0 auto;
   background: #d9d9d9;
   border-radius: 110px;
   min-height: 208px;
@@ -62,12 +66,22 @@ h1[tabindex='-1']:focus {
   line-height: 1.6;
   margin: 24px 0;
 }
-@media (max-width: 600px) {
+@media (max-width: 1000px) {
+  .menu-colaborador {
+    gap: 20px;
+    padding: 32px;
+  }
+  .menu-colaborador .acao-colaborador {
+    flex: 1;
+  }
+}
+@media (max-width: 760px) {
   .inicio-colaborador {
-    padding: 26px 16px 48px;
+    padding: 88px 16px 48px;
   }
   .inicio-colaborador .marca {
-    margin-bottom: 50px;
+    font-size: 56px;
+    margin-bottom: 36px;
   }
   .menu-colaborador {
     flex-direction: column;
@@ -75,7 +89,8 @@ h1[tabindex='-1']:focus {
     padding: 32px 24px;
     border-radius: 48px;
   }
-  .acao-colaborador {
+  .menu-colaborador .acao-colaborador {
+    flex: none;
     width: 100%;
     max-width: 300px;
   }
