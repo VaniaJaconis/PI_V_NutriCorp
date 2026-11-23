@@ -1,0 +1,2738 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "NutriCorp API",
+    "version": "0.1.0",
+    "description": "Contrato da API do NutriCorp. Erros seguem sempre o formato \"Erro\". Datas em AAAA-MM-DD e fuso America/Sao_Paulo."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Cadastro e acesso"
+    },
+    {
+      "name": "Cardápios"
+    },
+    {
+      "name": "Colaborador",
+      "description": "Exige perfil \"colaborador\"."
+    },
+    {
+      "name": "Organização",
+      "description": "Exige perfil \"organizacao\"."
+    },
+    {
+      "name": "Infraestrutura"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ResultadoLogin": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+          },
+          "nome": {
+            "type": "string",
+            "example": "Ana Souza"
+          },
+          "perfil": {
+            "$ref": "#/components/schemas/PerfilAcesso"
+          },
+          "organizacao": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+              },
+              "nome": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "nome"
+            ]
+          },
+          "token": {
+            "type": "string",
+            "description": "JWT. Enviar em \"Authorization: Bearer <token>\"."
+          },
+          "expiraEm": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-20T15:15:00.000Z"
+          },
+          "modo": {
+            "type": "string",
+            "enum": [
+              "api"
+            ],
+            "description": "Sempre \"api\". Mantido para compatibilidade com os serviços simulados do frontend (\"simulado\")."
+          }
+        },
+        "required": [
+          "id",
+          "nome",
+          "perfil",
+          "organizacao",
+          "token",
+          "expiraEm",
+          "modo"
+        ],
+        "description": "Também é a resposta dos cadastros: após cadastrar, o usuário já fica autenticado."
+      },
+      "PerfilAcesso": {
+        "type": "string",
+        "enum": [
+          "colaborador",
+          "organizacao"
+        ]
+      },
+      "Erro": {
+        "type": "object",
+        "properties": {
+          "erro": {
+            "type": "object",
+            "properties": {
+              "codigo": {
+                "type": "string",
+                "example": "validacao"
+              },
+              "mensagem": {
+                "type": "string",
+                "example": "Verifique os campos destacados."
+              },
+              "campos": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Mensagem por campo (caminho separado por ponto), pronta para exibir no formulário.",
+                "example": {
+                  "cpf": "Informe um CPF válido."
+                }
+              }
+            },
+            "required": [
+              "codigo",
+              "mensagem"
+            ]
+          }
+        },
+        "required": [
+          "erro"
+        ]
+      },
+      "NovaOrganizacao": {
+        "type": "object",
+        "properties": {
+          "razaoSocial": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "cnpj": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 18,
+            "description": "Com ou sem máscara. Aceita o CNPJ alfanumérico.",
+            "example": "11.222.333/0001-81"
+          },
+          "nomeFantasia": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "setor": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "emailComunicacao": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 254,
+            "format": "email",
+            "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+            "example": "ana.souza@empresa.com.br",
+            "description": "Também é o usuário de login da organização."
+          },
+          "senha": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "format": "password",
+            "example": "NutriCorp123!"
+          }
+        },
+        "required": [
+          "razaoSocial",
+          "cnpj",
+          "nomeFantasia",
+          "setor",
+          "emailComunicacao",
+          "senha"
+        ]
+      },
+      "NovoColaborador": {
+        "type": "object",
+        "properties": {
+          "nomeCompleto": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "cpf": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 14,
+            "description": "Com ou sem máscara.",
+            "example": "123.456.789-09"
+          },
+          "empresa": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "CNPJ (recomendado) ou nome fantasia/razão social de uma organização já cadastrada.",
+            "example": "11.222.333/0001-81"
+          },
+          "setor": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "codigoFuncionario": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "emailCorporativo": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 254,
+            "format": "email",
+            "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+            "example": "ana.souza@empresa.com.br",
+            "description": "Também é o usuário de login do colaborador."
+          },
+          "senha": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "format": "password",
+            "example": "NutriCorp123!"
+          }
+        },
+        "required": [
+          "nomeCompleto",
+          "cpf",
+          "empresa",
+          "setor",
+          "codigoFuncionario",
+          "emailCorporativo",
+          "senha"
+        ]
+      },
+      "CredenciaisLogin": {
+        "type": "object",
+        "properties": {
+          "usuario": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 254,
+            "description": "E-mail cadastrado (corporativo do colaborador ou de comunicação da organização).",
+            "example": "colaborador@nutricorp.dev"
+          },
+          "senha": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "format": "password",
+            "example": "NutriCorp123!"
+          }
+        },
+        "required": [
+          "usuario",
+          "senha"
+        ]
+      },
+      "Sessao": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+          },
+          "nome": {
+            "type": "string",
+            "example": "Ana Souza"
+          },
+          "perfil": {
+            "$ref": "#/components/schemas/PerfilAcesso"
+          },
+          "organizacao": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+              },
+              "nome": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "nome"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "nome",
+          "perfil",
+          "organizacao"
+        ]
+      },
+      "Refeicao": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+          },
+          "titulo": {
+            "type": "string",
+            "example": "Almoço vegetariano"
+          },
+          "data": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "example": "2026-11-20"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoRefeicao"
+          },
+          "unidade": {
+            "type": "string"
+          },
+          "inicio": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "example": "11:30"
+          },
+          "fim": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "example": "11:30"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoCardapio"
+          },
+          "pratos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Prato"
+            }
+          },
+          "avaliacoes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvaliacaoCompatibilidade"
+            },
+            "description": "Só para o colaborador: compatibilidade de cada prato com as preferências dele."
+          }
+        },
+        "required": [
+          "id",
+          "titulo",
+          "data",
+          "tipo",
+          "unidade",
+          "inicio",
+          "fim",
+          "estado",
+          "pratos"
+        ],
+        "description": "Visão de consulta de um cardápio (mesmo formato de types/cardapio.ts do frontend, com campos extras)."
+      },
+      "TipoRefeicao": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "Café da manhã",
+          "Almoço",
+          "Lanche",
+          "Jantar",
+          null
+        ]
+      },
+      "EstadoCardapio": {
+        "type": "string",
+        "enum": [
+          "rascunho",
+          "publicado"
+        ]
+      },
+      "Prato": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "ingredientes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ingredientesCompletos": {
+            "type": "boolean"
+          },
+          "contem": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestricaoAlimentar"
+            }
+          },
+          "podeConter": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestricaoAlimentar"
+            }
+          },
+          "alergenicosInformados": {
+            "type": "boolean"
+          },
+          "perfisCompativeis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PerfilAlimentar"
+            }
+          },
+          "nutricional": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "porcaoGramas": {
+                "type": "number"
+              },
+              "nutrientes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Nutriente"
+                }
+              }
+            },
+            "required": [
+              "porcaoGramas",
+              "nutrientes"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "nome",
+          "ingredientes",
+          "ingredientesCompletos",
+          "contem",
+          "podeConter",
+          "alergenicosInformados",
+          "perfisCompativeis",
+          "nutricional"
+        ],
+        "description": "Mesmo formato de types/cardapio.ts do frontend."
+      },
+      "RestricaoAlimentar": {
+        "type": "string",
+        "enum": [
+          "lactose",
+          "gluten",
+          "amendoim",
+          "castanhas",
+          "ovo",
+          "soja"
+        ],
+        "description": "No cadastro de cardápio, \"Leite\" corresponde a \"lactose\" e \"Glúten\" a \"gluten\"."
+      },
+      "PerfilAlimentar": {
+        "type": "string",
+        "enum": [
+          "sem_preferencia",
+          "vegetariana",
+          "vegana",
+          "pescetariana"
+        ]
+      },
+      "Nutriente": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "example": "Valor energético"
+          },
+          "quantidade": {
+            "type": "number",
+            "example": 580
+          },
+          "unidade": {
+            "type": "string",
+            "enum": [
+              "kcal",
+              "g",
+              "mg"
+            ]
+          }
+        },
+        "required": [
+          "nome",
+          "quantidade",
+          "unidade"
+        ]
+      },
+      "AvaliacaoCompatibilidade": {
+        "type": "object",
+        "properties": {
+          "pratoId": {
+            "type": "string",
+            "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+          },
+          "situacao": {
+            "$ref": "#/components/schemas/SituacaoCompatibilidade"
+          },
+          "alertas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Contém lactose.",
+              "Pode conter traços de soja."
+            ]
+          },
+          "incompleto": {
+            "type": "boolean",
+            "description": "Ingredientes ou alérgenos não confirmados pela organização."
+          }
+        },
+        "required": [
+          "pratoId",
+          "situacao",
+          "alertas",
+          "incompleto"
+        ]
+      },
+      "SituacaoCompatibilidade": {
+        "type": "string",
+        "enum": [
+          "compativel",
+          "parcial",
+          "incompativel"
+        ],
+        "description": "compativel: sem alertas. parcial: só alertas leves (traços, alimentos a evitar) ou informações incompletas. incompativel: contém restrição ou não atende ao perfil alimentar."
+      },
+      "PreferenciasColaborador": {
+        "type": "object",
+        "properties": {
+          "perfil": {
+            "$ref": "#/components/schemas/PerfilAlimentar"
+          },
+          "alimentosEvitar": {
+            "type": "string"
+          },
+          "restricoes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestricaoAlimentar"
+            }
+          },
+          "outrasOrientacoes": {
+            "type": "string"
+          },
+          "atualizadoEm": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": "2026-11-20T15:15:00.000Z",
+            "description": "null enquanto o colaborador não salvou as preferências."
+          }
+        },
+        "required": [
+          "perfil",
+          "alimentosEvitar",
+          "restricoes",
+          "outrasOrientacoes",
+          "atualizadoEm"
+        ]
+      },
+      "ResultadoPreferencias": {
+        "type": "object",
+        "properties": {
+          "modo": {
+            "type": "string",
+            "enum": [
+              "api"
+            ],
+            "description": "Sempre \"api\". Mantido para compatibilidade com os serviços simulados do frontend (\"simulado\")."
+          },
+          "preferencias": {
+            "$ref": "#/components/schemas/PreferenciasColaborador"
+          }
+        },
+        "required": [
+          "modo",
+          "preferencias"
+        ]
+      },
+      "EntradaPreferencias": {
+        "type": "object",
+        "properties": {
+          "perfil": {
+            "$ref": "#/components/schemas/PerfilAlimentar"
+          },
+          "alimentosEvitar": {
+            "type": "string",
+            "maxLength": 500,
+            "default": "",
+            "description": "Lista livre separada por vírgulas. Cada item é comparado com os ingredientes dos pratos.",
+            "example": "pimentão, cebola crua"
+          },
+          "restricoes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestricaoAlimentar"
+            },
+            "maxItems": 6,
+            "default": []
+          },
+          "outrasOrientacoes": {
+            "type": "string",
+            "maxLength": 1000,
+            "default": ""
+          }
+        },
+        "required": [
+          "perfil"
+        ]
+      },
+      "CompatibilidadeRefeicao": {
+        "type": "object",
+        "properties": {
+          "refeicao": {
+            "$ref": "#/components/schemas/Refeicao"
+          },
+          "data": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "example": "2026-11-20"
+          },
+          "avaliacoes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvaliacaoCompatibilidade"
+            }
+          },
+          "alternativas": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "refeicaoId": {
+                  "type": "string",
+                  "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+                },
+                "prato": {
+                  "$ref": "#/components/schemas/Prato"
+                },
+                "avaliacao": {
+                  "$ref": "#/components/schemas/AvaliacaoCompatibilidade"
+                }
+              },
+              "required": [
+                "refeicaoId",
+                "prato",
+                "avaliacao"
+              ]
+            },
+            "description": "Outros cardápios publicados no mesmo dia e tipo de refeição, compatíveis com o perfil do colaborador."
+          },
+          "alternativaSelecionada": {
+            "type": "string",
+            "nullable": true,
+            "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+          }
+        },
+        "required": [
+          "refeicao",
+          "data",
+          "avaliacoes",
+          "alternativas",
+          "alternativaSelecionada"
+        ]
+      },
+      "ResultadoSelecaoAlternativa": {
+        "type": "object",
+        "properties": {
+          "alternativaSelecionada": {
+            "type": "string",
+            "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+          },
+          "modo": {
+            "type": "string",
+            "enum": [
+              "api"
+            ],
+            "description": "Sempre \"api\". Mantido para compatibilidade com os serviços simulados do frontend (\"simulado\")."
+          }
+        },
+        "required": [
+          "alternativaSelecionada",
+          "modo"
+        ]
+      },
+      "EntradaSelecaoAlternativa": {
+        "type": "object",
+        "properties": {
+          "alternativaId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "alternativaId"
+        ]
+      },
+      "OpcaoRegistro": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69",
+            "description": "Id do cardápio. Enviar como \"opcaoId\"."
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoRefeicao"
+          },
+          "data": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-11-20"
+          },
+          "prato": {
+            "$ref": "#/components/schemas/Prato"
+          },
+          "avaliacao": {
+            "$ref": "#/components/schemas/AvaliacaoCompatibilidade"
+          }
+        },
+        "required": [
+          "id",
+          "tipo",
+          "data",
+          "prato",
+          "avaliacao"
+        ]
+      },
+      "RegistroRefeicao": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+          },
+          "data": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-11-20"
+          },
+          "registradoEm": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-20T15:15:00.000Z"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoRefeicao"
+          },
+          "nomeRefeicao": {
+            "type": "string"
+          },
+          "energia": {
+            "type": "number",
+            "nullable": true,
+            "description": "kcal por porção."
+          },
+          "observacoes": {
+            "type": "string"
+          },
+          "situacao": {
+            "$ref": "#/components/schemas/SituacaoCompatibilidade"
+          }
+        },
+        "required": [
+          "id",
+          "data",
+          "registradoEm",
+          "tipo",
+          "nomeRefeicao",
+          "energia",
+          "observacoes",
+          "situacao"
+        ]
+      },
+      "EntradaRegistro": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-11-20"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "Café da manhã",
+              "Almoço",
+              "Lanche",
+              "Jantar"
+            ]
+          },
+          "opcaoId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "observacoes": {
+            "type": "string",
+            "maxLength": 500,
+            "default": ""
+          },
+          "requisicaoId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Gerado pelo cliente (ex.: crypto.randomUUID()) a cada novo registro. Reenviar o mesmo valor não duplica o registro.",
+            "example": "5d1c8b8e-2a7f-4c1e-9b0e-0c9a7c2f9e11"
+          }
+        },
+        "required": [
+          "data",
+          "tipo",
+          "opcaoId",
+          "requisicaoId"
+        ]
+      },
+      "CardapioOrganizacao": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoCardapio"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "data": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "example": "2026-11-20"
+          },
+          "refeicao": {
+            "$ref": "#/components/schemas/TipoRefeicao"
+          },
+          "unidade": {
+            "type": "string"
+          },
+          "inicio": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "example": "11:30"
+          },
+          "fim": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "example": "11:30"
+          },
+          "preparacoes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ingredientes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "alergenos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestricaoAlimentar"
+            }
+          },
+          "podeConter": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestricaoAlimentar"
+            }
+          },
+          "perfisCompativeis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PerfilAlimentar"
+            }
+          },
+          "revisado": {
+            "type": "boolean"
+          },
+          "nutricional": {
+            "type": "object",
+            "properties": {
+              "porcaoGramas": {
+                "type": "number",
+                "nullable": true
+              },
+              "energiaKcal": {
+                "type": "number",
+                "nullable": true
+              },
+              "carboidratosG": {
+                "type": "number",
+                "nullable": true
+              },
+              "proteinasG": {
+                "type": "number",
+                "nullable": true
+              },
+              "gordurasG": {
+                "type": "number",
+                "nullable": true
+              },
+              "sodioMg": {
+                "type": "number",
+                "nullable": true
+              }
+            },
+            "required": [
+              "porcaoGramas",
+              "energiaKcal",
+              "carboidratosG",
+              "proteinasG",
+              "gordurasG",
+              "sodioMg"
+            ]
+          },
+          "criadoEm": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-20T15:15:00.000Z"
+          },
+          "atualizadoEm": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-20T15:15:00.000Z"
+          },
+          "publicadoEm": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": "2026-11-20T15:15:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "estado",
+          "nome",
+          "data",
+          "refeicao",
+          "unidade",
+          "inicio",
+          "fim",
+          "preparacoes",
+          "ingredientes",
+          "alergenos",
+          "podeConter",
+          "perfisCompativeis",
+          "revisado",
+          "nutricional",
+          "criadoEm",
+          "atualizadoEm",
+          "publicadoEm"
+        ]
+      },
+      "EntradaCardapio": {
+        "type": "object",
+        "properties": {
+          "estado": {
+            "$ref": "#/components/schemas/EstadoCardapio"
+          },
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "data": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "default": null,
+            "example": "2026-11-20"
+          },
+          "refeicao": {
+            "$ref": "#/components/schemas/TipoRefeicao"
+          },
+          "unidade": {
+            "type": "string",
+            "maxLength": 120,
+            "default": ""
+          },
+          "inicio": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "default": null,
+            "example": "11:30"
+          },
+          "fim": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "default": null,
+            "example": "11:30"
+          },
+          "preparacoes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "maxItems": 30,
+            "default": [],
+            "description": "Uma preparação por item (no formulário: uma por linha).",
+            "example": [
+              "Arroz integral",
+              "Feijão",
+              "Tofu grelhado"
+            ]
+          },
+          "ingredientes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "maxItems": 100,
+            "default": [],
+            "description": "Um ingrediente por item (no formulário: separados por vírgula ou linha).",
+            "example": [
+              "Arroz integral",
+              "Feijão",
+              "Tofu de soja",
+              "Azeite",
+              "Sal"
+            ]
+          },
+          "alergenos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestricaoAlimentar"
+            },
+            "default": [],
+            "description": "Alérgenos que o prato contém."
+          },
+          "podeConter": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestricaoAlimentar"
+            },
+            "default": [],
+            "description": "Alérgenos que podem estar presentes como traços."
+          },
+          "perfisCompativeis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PerfilAlimentar"
+            },
+            "default": [],
+            "description": "Perfis alimentares atendidos (vegetariana, vegana, pescetariana). Lista vazia: atende apenas \"sem_preferencia\"."
+          },
+          "revisado": {
+            "type": "boolean",
+            "default": false,
+            "description": "Confirmação de que ingredientes e alérgenos foram revisados."
+          },
+          "nutricional": {
+            "$ref": "#/components/schemas/InformacaoNutricional"
+          }
+        },
+        "required": [
+          "estado",
+          "nome"
+        ],
+        "description": "Rascunho exige só o nome. Para publicar, todos os campos, a revisão e a tabela nutricional são obrigatórios."
+      },
+      "InformacaoNutricional": {
+        "type": "object",
+        "properties": {
+          "porcaoGramas": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 10000,
+            "default": null,
+            "example": 450
+          },
+          "energiaKcal": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 100000,
+            "default": null,
+            "description": "Por porção, em kcal."
+          },
+          "carboidratosG": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 100000,
+            "default": null,
+            "description": "Por porção, em g."
+          },
+          "proteinasG": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 100000,
+            "default": null,
+            "description": "Por porção, em g."
+          },
+          "gordurasG": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 100000,
+            "default": null,
+            "description": "Por porção, em g."
+          },
+          "sodioMg": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 100000,
+            "default": null,
+            "description": "Por porção, em mg."
+          }
+        },
+        "default": {
+          "porcaoGramas": null,
+          "energiaKcal": null,
+          "carboidratosG": null,
+          "proteinasG": null,
+          "gordurasG": null,
+          "sodioMg": null
+        }
+      },
+      "IndicadoresConsolidados": {
+        "type": "object",
+        "properties": {
+          "periodo": {
+            "type": "object",
+            "properties": {
+              "inicio": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-11-20"
+              },
+              "fim": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-11-20"
+              }
+            },
+            "required": [
+              "inicio",
+              "fim"
+            ]
+          },
+          "colaboradoresAtivos": {
+            "type": "integer"
+          },
+          "refeicoesRegistradas": {
+            "type": "integer"
+          },
+          "taxaAdesao": {
+            "type": "integer",
+            "description": "% de colaboradores ativos com pelo menos um registro no período."
+          },
+          "cardapiosPublicados": {
+            "type": "integer",
+            "description": "Cardápios publicados com data dentro do período."
+          },
+          "registrosPorDia": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "dia": {
+                  "type": "string",
+                  "example": "Seg"
+                },
+                "data": {
+                  "type": "string",
+                  "format": "date",
+                  "example": "2026-11-20"
+                },
+                "valor": {
+                  "type": "integer",
+                  "description": "Quantidade de registros."
+                },
+                "percentual": {
+                  "type": "integer",
+                  "description": "Valor relativo ao dia com mais registros (0 a 100). Usar na altura da barra."
+                }
+              },
+              "required": [
+                "dia",
+                "data",
+                "valor",
+                "percentual"
+              ]
+            }
+          },
+          "compatibilidade": {
+            "type": "object",
+            "properties": {
+              "compativeis": {
+                "type": "integer"
+              },
+              "parciais": {
+                "type": "integer"
+              },
+              "incompativeis": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "compativeis",
+              "parciais",
+              "incompativeis"
+            ],
+            "description": "% das refeições registradas no período por compatibilidade com as preferências (soma 100, ou 0 sem registros)."
+          }
+        },
+        "required": [
+          "periodo",
+          "colaboradoresAtivos",
+          "refeicoesRegistradas",
+          "taxaAdesao",
+          "cardapiosPublicados",
+          "registrosPorDia",
+          "compatibilidade"
+        ],
+        "description": "Somente dados agregados: preferências e restrições individuais nunca são expostas à organização."
+      },
+      "ColaboradorResumo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+          },
+          "nomeCompleto": {
+            "type": "string"
+          },
+          "emailCorporativo": {
+            "type": "string"
+          },
+          "setor": {
+            "type": "string"
+          },
+          "codigoFuncionario": {
+            "type": "string"
+          },
+          "ativo": {
+            "type": "boolean"
+          },
+          "criadoEm": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-20T15:15:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "nomeCompleto",
+          "emailCorporativo",
+          "setor",
+          "codigoFuncionario",
+          "ativo",
+          "criadoEm"
+        ]
+      },
+      "EntradaAcesso": {
+        "type": "object",
+        "properties": {
+          "ativo": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ativo"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/api/saude": {
+      "get": {
+        "tags": [
+          "Infraestrutura"
+        ],
+        "summary": "Verificar se a API está no ar",
+        "responses": {
+          "200": {
+            "description": "API disponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizacoes": {
+      "post": {
+        "tags": [
+          "Cadastro e acesso"
+        ],
+        "summary": "Cadastrar organização",
+        "description": "Tela: Cadastro da organização. Já devolve a sessão autenticada.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovaOrganizacao"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Organização cadastrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoLogin"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CNPJ ou e-mail já cadastrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/colaboradores": {
+      "post": {
+        "tags": [
+          "Cadastro e acesso"
+        ],
+        "summary": "Cadastrar colaborador",
+        "description": "Tela: Cadastro do colaborador. \"empresa\" deve identificar uma organização já cadastrada. Já devolve a sessão autenticada.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovoColaborador"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Colaborador cadastrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoLogin"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CPF, e-mail ou código do funcionário já cadastrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Cadastro e acesso"
+        ],
+        "summary": "Entrar",
+        "description": "Tela: Login. O perfil devolvido define a área (colaborador ou organização).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredenciaisLogin"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login realizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoLogin"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Usuário ou senha inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso do colaborador desativado pela organização.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/sessao": {
+      "get": {
+        "tags": [
+          "Cadastro e acesso"
+        ],
+        "summary": "Dados da sessão atual",
+        "description": "Use ao recarregar a página para recuperar nome e perfil a partir do token salvo.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sessão válida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sessao"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cardapios": {
+      "get": {
+        "tags": [
+          "Cardápios"
+        ],
+        "summary": "Listar cardápios (formato Refeicao)",
+        "description": "Telas: Cardápios do colaborador e da organização. Colaborador: só publicados, com \"avaliacoes\" de compatibilidade. Organização: todos, filtráveis por estado.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-11-20"
+            },
+            "required": false,
+            "name": "data",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/TipoRefeicao"
+            },
+            "required": false,
+            "name": "refeicao",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "rascunho",
+                "publicado"
+              ],
+              "description": "Só para a organização. O colaborador sempre vê só os publicados."
+            },
+            "required": false,
+            "description": "Só para a organização. O colaborador sempre vê só os publicados.",
+            "name": "estado",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cardápios.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Refeicao"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cardapios/{id}": {
+      "get": {
+        "tags": [
+          "Cardápios"
+        ],
+        "summary": "Detalhar cardápio (formato Refeicao)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cardápio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Refeicao"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado (ou de outra organização).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/colaborador/preferencias": {
+      "get": {
+        "tags": [
+          "Colaborador"
+        ],
+        "summary": "Consultar preferências e restrições",
+        "description": "Tela: Preferências e restrições. Sem cadastro prévio, devolve os valores padrão.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Preferências.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferenciasColaborador"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Colaborador"
+        ],
+        "summary": "Salvar preferências e restrições",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntradaPreferencias"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Preferências salvas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoPreferencias"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/colaborador/cardapios/{id}/compatibilidade": {
+      "get": {
+        "tags": [
+          "Colaborador"
+        ],
+        "summary": "Compatibilidade da refeição e alternativas",
+        "description": "Tela: Compatibilidade das refeições.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Avaliação da refeição.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompatibilidadeRefeicao"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado (ou de outra organização).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/colaborador/cardapios/{id}/alternativa": {
+      "put": {
+        "tags": [
+          "Colaborador"
+        ],
+        "summary": "Selecionar alternativa compatível",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntradaSelecaoAlternativa"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Alternativa selecionada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoSelecaoAlternativa"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cardápio ou alternativa indisponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Alternativa incompatível com o perfil atual.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/colaborador/registros/opcoes": {
+      "get": {
+        "tags": [
+          "Colaborador"
+        ],
+        "summary": "Refeições disponíveis para registro",
+        "description": "Tela: Registro de refeições (lista \"Selecione a refeição consumida\").",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-11-20",
+              "description": "Padrão: hoje (America/Sao_Paulo)."
+            },
+            "required": false,
+            "description": "Padrão: hoje (America/Sao_Paulo).",
+            "name": "data",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Opções do dia.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OpcaoRegistro"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/colaborador/registros": {
+      "get": {
+        "tags": [
+          "Colaborador"
+        ],
+        "summary": "Histórico de refeições registradas",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mais recentes primeiro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RegistroRefeicao"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Colaborador"
+        ],
+        "summary": "Registrar refeição consumida",
+        "description": "Idempotente por \"requisicaoId\": reenviar o mesmo valor devolve o registro já criado (200) em vez de duplicar.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntradaRegistro"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registro já existente para este requisicaoId.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistroRefeicao"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Registro criado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistroRefeicao"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizacao/cardapios": {
+      "get": {
+        "tags": [
+          "Organização"
+        ],
+        "summary": "Listar cardápios cadastrados",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-11-20"
+            },
+            "required": false,
+            "name": "data",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/TipoRefeicao"
+            },
+            "required": false,
+            "name": "refeicao",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "rascunho",
+                "publicado"
+              ],
+              "description": "Só para a organização. O colaborador sempre vê só os publicados."
+            },
+            "required": false,
+            "description": "Só para a organização. O colaborador sempre vê só os publicados.",
+            "name": "estado",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cardápios da organização.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CardapioOrganizacao"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Organização"
+        ],
+        "summary": "Cadastrar cardápio (rascunho ou publicado)",
+        "description": "Tela: Cadastro de cardápio.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntradaCardapio"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Cardápio criado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardapioOrganizacao"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizacao/cardapios/{id}": {
+      "get": {
+        "tags": [
+          "Organização"
+        ],
+        "summary": "Detalhar cardápio cadastrado",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cardápio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardapioOrganizacao"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado (ou de outra organização).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Organização"
+        ],
+        "summary": "Atualizar, publicar ou voltar para rascunho",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntradaCardapio"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cardápio atualizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardapioOrganizacao"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado (ou de outra organização).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Organização"
+        ],
+        "summary": "Excluir cardápio",
+        "description": "Os registros de refeição já feitos continuam no histórico.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Excluído."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado (ou de outra organização).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizacao/indicadores": {
+      "get": {
+        "tags": [
+          "Organização"
+        ],
+        "summary": "Indicadores consolidados",
+        "description": "Tela: Indicadores consolidados. Período padrão: últimos 7 dias.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-11-20",
+              "description": "Padrão: 6 dias antes do fim."
+            },
+            "required": false,
+            "description": "Padrão: 6 dias antes do fim.",
+            "name": "inicio",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-11-20",
+              "description": "Padrão: hoje (America/Sao_Paulo)."
+            },
+            "required": false,
+            "description": "Padrão: hoje (America/Sao_Paulo).",
+            "name": "fim",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Indicadores do período.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndicadoresConsolidados"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizacao/colaboradores": {
+      "get": {
+        "tags": [
+          "Organização"
+        ],
+        "summary": "Listar colaboradores (controle de acesso)",
+        "description": "Tela: Controle de acesso. Não inclui CPF nem preferências alimentares.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Colaboradores.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ColaboradorResumo"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizacao/colaboradores/{id}": {
+      "patch": {
+        "tags": [
+          "Organização"
+        ],
+        "summary": "Ativar ou desativar o acesso do colaborador",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntradaAcesso"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Acesso atualizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ColaboradorResumo"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado (ou de outra organização).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

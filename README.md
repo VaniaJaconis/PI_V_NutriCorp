@@ -97,7 +97,14 @@ Funcionalidades mais avançadas poderão ser incorporadas em versões futuras, c
 --- WIP ---
 
 ## Intruções de Execução
---- WIP ---
+
+### Back-end
+```bash
+cd backend
+npm install
+npm run dev
+```
+A API sobe em http://localhost:3333/api, com a documentação em http://localhost:3333/api/docs. Detalhes em [backend/README.md](backend/README.md).
 
 ## Autores do Projeto
 - Ana Rita Fonseca Ferreira
