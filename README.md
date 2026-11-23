@@ -10,49 +10,56 @@
 * [Vídeo Demonstrativo](#vídeo-demonstrativo)
 * [Instruções de Execução](#intruções-de-execução)
 * [Autores do Projeto](#autores-do-projeto)
-* [Licença](#licença)
+* [Licença e Finalidade Acadêmica](#licença-e-finalidade-acadêmica)
 
 ## Descrição do Projeto
-O NutriCorp é uma plataforma digital B2B voltada a médias e grandes organizações. A solução integra ações de saúde preventiva, gestão nutricional e alimentação corporativa em um único ambiente tecnológico, unindo três frentes estratégicas: Recursos Humanos, Saúde e Segurança no Trabalho e Serviços de Alimentação Corporativa.
-O sistema foi concebido para resolver a fragmentação de informações sobre cardápios, preferências e programas de saúde, aproximando gestão e colaboradores por meio de uma ferramenta de apoio à educação nutricional e à promoção da saúde.
 
-O NutriCorp propõe uma solução tecnológica que utiliza informações fornecidas voluntariamente pelos colaboradores para apresentar informações e recomendações nutricionais personalizadas, além de disponibilizar os cardápios dos refeitórios corporativos e restaurantes parceiros.
+O NutriCorp é uma plataforma digital B2B (*Business to Business*) voltada a médias e grandes organizações. A solução integra saúde preventiva, gestão nutricional e alimentação corporativa em um único ambiente tecnológico, conectando três frentes estratégicas: Recursos Humanos (RH), Saúde e Segurança no Trabalho (SST) e Serviços de Alimentação Corporativa.
 
-O sistema não terá como finalidade realizar diagnósticos médicos ou substituir o acompanhamento realizado por profissionais de saúde. Sua função será atuar como uma ferramenta de apoio à prevenção, à educação nutricional e à promoção de hábitos alimentares saudáveis, respeitando os requisitos de segurança e proteção de dados.
+O projeto surgiu da necessidade de centralizar informações relacionadas a cardápios, preferências alimentares e iniciativas de promoção da saúde, aproximando colaboradores, gestores e responsáveis pelos serviços de alimentação por meio de uma ferramenta de apoio à educação nutricional e ao incentivo de hábitos alimentares mais saudáveis.
 
-Ao utilizar o NutriCorp para oferecer escolhas nutricionais conscientes e personalizadas, a organização transforma a refeição corporativa em um combustível estratégico para o foco, a energia e a alta performance das equipes.
+Por meio das informações fornecidas voluntariamente pelos colaboradores, a plataforma propõe disponibilizar informações nutricionais e recomendações personalizadas, além de permitir a consulta aos cardápios dos refeitórios corporativos e restaurantes parceiros.
 
-A NutriCorp é uma plataforma capaz de transformar a alimentação no ambiente de trabalho em uma oportunidade de promoção da saúde, prevenção e melhoria da qualidade de vida.
+O NutriCorp não tem como finalidade realizar diagnósticos médicos ou substituir o acompanhamento de profissionais de saúde. Sua proposta é atuar como uma ferramenta de apoio à prevenção, à educação nutricional e à promoção de hábitos alimentares saudáveis, considerando os requisitos de segurança e proteção de dados pessoais.
+
+A plataforma busca transformar a alimentação no ambiente de trabalho em uma oportunidade de promoção da saúde, prevenção e melhoria da qualidade de vida, contribuindo também para o bem-estar e a valorização dos colaboradores e para o aprimoramento da gestão da alimentação corporativa.
 
 ## Objetivos
-Desenvolver uma plataforma corporativa integrada de saúde preventiva e gestão nutricional que possibilite às organizações promover hábitos alimentares mais saudáveis, facilitar o acesso dos colaboradores a informações nutricionais e apoiar a gestão dos serviços de alimentação corporativa, utilizando a tecnologia como instrumento de integração entre colaboradores, gestores e serviços de alimentação. 
 
-## Funcionalidades 
-MVP
+Desenvolver uma plataforma corporativa integrada de saúde preventiva e gestão nutricional que possibilite às organizações promover hábitos alimentares mais saudáveis, facilitar o acesso dos colaboradores a informações nutricionais e apoiar a gestão dos serviços de alimentação corporativa, utilizando a tecnologia como instrumento de integração entre colaboradores, gestores e serviços de alimentação.
+
+## Funcionalidades
+
+### MVP (Produto Mínimo Viável)
+
+A primeira versão do NutriCorp contempla as funcionalidades essenciais para demonstrar a proposta da plataforma:
+
 1. Cadastro da organização.
 2. Cadastro do colaborador.
 3. Login e controle de acesso.
 4. Cadastro de preferências e restrições alimentares.
-5. Cadastro do cardápio.
+5. Cadastro de cardápios.
 6. Consulta ao cardápio pelo colaborador.
 7. Exibição de informações nutricionais.
 8. Identificação de refeições incompatíveis com restrições cadastradas.
 9. Registro das refeições.
 10. Painel básico com indicadores consolidados.
-    
-Funcionalidades mais avançadas poderão ser incorporadas posteriormente, como integração com sistemas corporativos, integração com restaurantes externos e recursos analíticos mais avançados.
+
+### Funcionalidades futuras
+
+Funcionalidades mais avançadas poderão ser incorporadas em versões futuras, como integração com sistemas corporativos, integração com restaurantes externos e recursos analíticos mais avançados.
 
 ## Tecnologias Utilizadas
 
 ### Front-end
 - React Native
-- React JS
+- React.js
 
 ### Back-end
 - Node.js
 - TypeScript
 
-### Banco de dados
+### Banco de Dados
 - PostgreSQL
 
 ### Infraestrutura e Ferramentas
@@ -101,7 +108,8 @@ Funcionalidades mais avançadas poderão ser incorporadas posteriormente, como i
 - Samara Angelica da Silva
 - Vânia Nunes Jaconis
 
-## Licença
-<h6 align="center"> Esse projeto possui fins acadêmicos e foi desenvolvido para aprovação na disciplina <br>
-<h6 align="center"> PROJETO INTEGRADOR V: ANÁLISE DE SOLUÇÕES INTEGRADAS PARA ORGANIZAÇÕES <br>
-<h6 align="center"> Professor Anderson Clayton Garcia Lopes
+## Licença e Finalidade Acadêmica
+<p align="center"> Este projeto possui finalidade exclusivamente acadêmica e foi desenvolvido como parte das atividades da disciplina <br>
+<p align="center"> PROJETO INTEGRADOR V: ANÁLISE DE SOLUÇÕES INTEGRADAS PARA ORGANIZAÇÕES <br>
+<p align="center"> Curso Análise e Desenvolvimento de Sistemas do Centro Universitário Senac <br>
+<p align="center"> Professor Anderson Clayton Garcia Lopes
