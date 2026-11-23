@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   atualizarAcesso,
   consultarAcessos,
+  gerarSenhaTemporaria,
 } from '../services/controleAcesso';
 import {
   perfisAcesso,
@@ -53,12 +54,31 @@ export default function ControleAcesso({ nome }: { nome: string }) {
           item.id === resultado.colaborador.id ? resultado.colaborador : item,
         ),
       );
-      setMensagem('Acesso atualizado com sucesso.');
+      setMensagem(
+        acesso === 'Funcionário' ? 'Acesso liberado com sucesso.' : 'Acesso atualizado com sucesso.',
+      );
     } catch (erro) {
       setErroAtualizacao(
         erro instanceof Error
           ? erro.message
           : 'Não foi possível atualizar o acesso. Tente novamente.',
+      );
+    } finally {
+      setAtualizandoId('');
+    }
+  }
+
+  async function novaSenha(colaborador: ColaboradorAcesso) {
+    if (atualizandoId) return;
+    setAtualizandoId(colaborador.id);
+    setErroAtualizacao('');
+    setMensagem('');
+    try {
+      const senha = await gerarSenhaTemporaria(colaborador.id);
+      setMensagem(`Senha temporária de ${colaborador.nome}: ${senha}. Repasse ao colaborador.`);
+    } catch (erro) {
+      setErroAtualizacao(
+        erro instanceof Error ? erro.message : 'Não foi possível gerar a senha. Tente novamente.',
       );
     } finally {
       setAtualizandoId('');
@@ -133,11 +153,15 @@ export default function ControleAcesso({ nome }: { nome: string }) {
                   <th scope="col">Setor</th>
                   <th scope="col">Acesso</th>
                   <th scope="col">Código de Funcionário</th>
+                  <th scope="col">Senha</th>
                 </tr>
               </thead>
               <tbody>
                 {colaboradores.map((colaborador) => (
-                  <tr key={colaborador.id}>
+                  <tr
+                    key={colaborador.id}
+                    className={colaborador.acesso === 'Aguardando aprovação' ? 'controle-acesso-pendente' : undefined}
+                  >
                     <td>{colaborador.nome}</td>
                     <td>{colaborador.setor}</td>
                     <td>
@@ -156,6 +180,11 @@ export default function ControleAcesso({ nome }: { nome: string }) {
                             void alterarAcesso(colaborador.id, acesso);
                         }}
                       >
+                        {colaborador.acesso === 'Aguardando aprovação' && (
+                          <option value="Aguardando aprovação" disabled>
+                            Aguardando aprovação
+                          </option>
+                        )}
                         {perfisAcesso.map((perfil) => (
                           <option key={perfil} value={perfil}>
                             {perfil}
@@ -164,6 +193,16 @@ export default function ControleAcesso({ nome }: { nome: string }) {
                       </select>
                     </td>
                     <td>{colaborador.codigoFuncionario}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="controle-acesso-senha"
+                        disabled={Boolean(atualizandoId) || colaborador.acesso !== 'Funcionário'}
+                        onClick={() => void novaSenha(colaborador)}
+                      >
+                        Gerar senha temporária
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -19,6 +19,7 @@ export default function InicioOrganizacao({ nome, onSair }: { nome: string; onSa
         </a>
       </nav>
       <button className="sessao-sair" type="button" onClick={onSair}>Sair</button>
+      <a className="inicio-alterar-senha" href="#/organizacao/senha">Alterar senha</a>
     </main>
   );
 }

@@ -100,10 +100,17 @@ export function criarServicoContas(repos: Repositorios, tokens: ServicoTokens) {
         codigoFuncionario: dados.codigoFuncionario,
         emailCorporativo: email,
         senhaHash: await gerarHashSenha(dados.senha),
-        ativo: true,
+        ativo: false,
+        aprovado: false,
         criadoEm: new Date().toISOString(),
       });
-      return autenticar(colaborador.id, colaborador.nomeCompleto, 'colaborador', organizacao);
+      return {
+        id: colaborador.id,
+        nome: colaborador.nomeCompleto,
+        organizacao: { id: organizacao.id, nome: organizacao.nomeFantasia },
+        situacao: 'pendente' as const,
+        mensagem: `Cadastro enviado. Assim que ${organizacao.nomeFantasia} aprovar, você poderá entrar.`,
+      };
     },
 
     async entrar({ usuario, senha }: CredenciaisDto) {
@@ -117,8 +124,24 @@ export function criarServicoContas(repos: Repositorios, tokens: ServicoTokens) {
       if (!hash || !senhaCorreta || !organizacao) throw erros.credenciaisInvalidas();
       if (!colaborador)
         return autenticar(organizacao.id, organizacao.nomeFantasia, 'organizacao', organizacao);
+      if (!colaborador.aprovado) throw erros.acessoPendente();
       if (!colaborador.ativo) throw erros.acessoInativo();
       return autenticar(colaborador.id, colaborador.nomeCompleto, 'colaborador', organizacao);
+    },
+
+    async alterarSenha(sessao: SessaoDto, senhaAtual: string, novaSenha: string) {
+      if (sessao.perfil === 'organizacao') {
+        const organizacao = await repos.organizacoes.buscarPorId(sessao.id);
+        if (!organizacao || !(await conferirSenha(senhaAtual, organizacao.senhaHash)))
+          throw erros.validacao({ senhaAtual: 'Senha atual incorreta.' });
+        await repos.organizacoes.alterarSenha(sessao.id, await gerarHashSenha(novaSenha));
+        return;
+      }
+      const colaborador = await repos.colaboradores.buscarPorId(sessao.id);
+      if (!colaborador || !(await conferirSenha(senhaAtual, colaborador.senhaHash)))
+        throw erros.validacao({ senhaAtual: 'Senha atual incorreta.' });
+      colaborador.senhaHash = await gerarHashSenha(novaSenha);
+      await repos.colaboradores.atualizar(colaborador);
     },
 
     async carregarSessao({ id, perfil }: DadosToken): Promise<SessaoDto | null> {
@@ -135,6 +158,7 @@ export function criarServicoContas(repos: Repositorios, tokens: ServicoTokens) {
       }
       const colaborador = await repos.colaboradores.buscarPorId(id);
       if (!colaborador) return null;
+      if (!colaborador.aprovado) throw erros.acessoPendente();
       if (!colaborador.ativo) throw erros.acessoInativo();
       const organizacao = await repos.organizacoes.buscarPorId(colaborador.organizacaoId);
       return organizacao

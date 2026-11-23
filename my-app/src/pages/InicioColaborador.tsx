@@ -26,6 +26,7 @@ export default function InicioColaborador({ nome, onSair }: Props) {
         </a>
       </nav>
       <button className="sessao-sair" type="button" onClick={onSair}>Sair</button>
+      <a className="inicio-alterar-senha" href="#/colaborador/senha">Alterar senha</a>
     </main>
   );
 }

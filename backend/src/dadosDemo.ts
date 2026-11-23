@@ -52,50 +52,47 @@ const lanche: Modelo = {
   nutricional: { porcaoGramas: 250, energiaKcal: 310, carboidratosG: 52, proteinasG: 9, gordurasG: 7, sodioMg: 85 },
 };
 
-export async function popularDadosDemo(servicos: Servicos, repos: Repositorios) {
-  if (await repos.organizacoes.buscarPorCnpj('11222333000181')) return;
+const CNPJ = '11222333000181';
+
+async function criarContas(servicos: Servicos, repos: Repositorios) {
   const organizacao = await servicos.contas.cadastrarOrganizacao({
     razaoSocial: 'NutriCorp Demonstração Ltda',
-    cnpj: '11.222.333/0001-81',
+    cnpj: CNPJ,
     nomeFantasia: 'NutriCorp Demo',
     setor: 'Tecnologia',
     emailComunicacao: 'organizacao@nutricorp.dev',
     senha: SENHA,
   });
   const orgId = organizacao.organizacao.id;
-  const colaborador = (nomeCompleto: string, cpf: string, setor: string, codigo: string, email: string) =>
-    servicos.contas.cadastrarColaborador({
+  const contas = [
+    ['Ana Souza', '52998224725', 'Financeiro', 'F-1024', 'colaborador@nutricorp.dev', true],
+    ['Bruno Lima', '11144477735', 'Operações', 'F-2048', 'bruno.lima@nutricorp.dev', true],
+    ['Carla Mendes', '98765432100', 'Recursos Humanos', 'F-4096', 'carla.mendes@nutricorp.dev', false],
+    ['Diego Rocha', '12345678909', 'Logística', 'F-8192', 'diego.rocha@nutricorp.dev', null],
+  ] as const;
+  for (const [nomeCompleto, cpf, setor, codigo, email, ativo] of contas) {
+    const { id } = await servicos.contas.cadastrarColaborador({
       nomeCompleto,
       cpf,
-      empresa: '11.222.333/0001-81',
+      empresa: CNPJ,
       setor,
       codigoFuncionario: codigo,
       emailCorporativo: email,
       senha: SENHA,
     });
-
-  const ana = await colaborador('Ana Souza', '529.982.247-25', 'Financeiro', 'F-1024', 'colaborador@nutricorp.dev');
-  const bruno = await colaborador('Bruno Lima', '111.444.777-35', 'Operações', 'F-2048', 'bruno.lima@nutricorp.dev');
-  const carla = await colaborador('Carla Mendes', '987.654.321-00', 'Recursos Humanos', 'F-4096', 'carla.mendes@nutricorp.dev');
-  await servicos.organizacao.alterarAcesso(orgId, carla.id, false);
-
-  await servicos.preferencias.salvar(ana.id, {
+    if (ativo !== null) {
+      await servicos.organizacao.alterarAcesso(orgId, id, true);
+      if (!ativo) await servicos.organizacao.alterarAcesso(orgId, id, false);
+    }
+  }
+  const ana = await repos.colaboradores.buscarPorEmail('colaborador@nutricorp.dev');
+  await servicos.preferencias.salvar(ana!.id, {
     perfil: 'vegetariana',
     restricoes: ['lactose'],
     alimentosEvitar: 'pimentão',
     outrasOrientacoes: '',
+    consentimento: true,
   });
-
-  const dataHoje = hoje();
-  const ids: Record<string, Record<string, string>> = {};
-  for (let deslocamento = -4; deslocamento <= 1; deslocamento++) {
-    const data = somarDias(dataHoje, deslocamento);
-    ids[data] = {};
-    for (const modelo of [tradicional, vegetariano, lanche]) {
-      const criado = await servicos.cardapios.criar(orgId, { ...modelo, data, estado: 'publicado' });
-      ids[data]![modelo.nome] = criado.id;
-    }
-  }
   await servicos.cardapios.criar(orgId, {
     ...tradicional,
     nome: 'Jantar de sexta',
@@ -109,20 +106,47 @@ export async function popularDadosDemo(servicos: Servicos, repos: Repositorios) 
     revisado: false,
     estado: 'rascunho',
   });
+}
 
-  const registrar = async (
-    sessao: typeof ana,
-    deslocamento: number,
-    modelo: Modelo,
-    observacoes = '',
-  ) => {
+export async function popularDadosDemo(servicos: Servicos, repos: Repositorios) {
+  if (!(await repos.organizacoes.buscarPorCnpj(CNPJ))) await criarContas(servicos, repos);
+  const organizacao = (await repos.organizacoes.buscarPorCnpj(CNPJ))!;
+  const orgId = organizacao.id;
+
+  const dataHoje = hoje();
+  const ids: Record<string, Record<string, string>> = {};
+  for (let deslocamento = -6; deslocamento <= 1; deslocamento++) {
     const data = somarDias(dataHoje, deslocamento);
-    await servicos.registros.registrar(sessao, {
+    const existentes = await repos.cardapios.listar({ organizacaoId: orgId, data });
+    ids[data] = Object.fromEntries(existentes.map((c) => [c.nome, c.id]));
+    for (const modelo of [tradicional, vegetariano, lanche]) {
+      if (ids[data]![modelo.nome]) continue;
+      const criado = await servicos.cardapios.criar(orgId, { ...modelo, data, estado: 'publicado' });
+      ids[data]![modelo.nome] = criado.id;
+    }
+  }
+
+  const sessao = async (email: string) => {
+    const c = (await repos.colaboradores.buscarPorEmail(email))!;
+    return {
+      id: c.id,
+      nome: c.nomeCompleto,
+      perfil: 'colaborador' as const,
+      organizacao: { id: orgId, nome: organizacao.nomeFantasia },
+    };
+  };
+  const ana = await sessao('colaborador@nutricorp.dev');
+  const bruno = await sessao('bruno.lima@nutricorp.dev');
+  const registrar = async (quem: typeof ana, deslocamento: number, modelo: Modelo, observacoes = '') => {
+    const data = somarDias(dataHoje, deslocamento);
+    const opcaoId = ids[data]?.[modelo.nome];
+    if (!opcaoId) return;
+    await servicos.registros.registrar(quem, {
       data,
       tipo: modelo.refeicao!,
-      opcaoId: ids[data]![modelo.nome]!,
+      opcaoId,
       observacoes,
-      requisicaoId: `demo-${sessao.id}-${data}-${modelo.nome}`,
+      requisicaoId: `demo-${data}-${modelo.nome}`,
     });
   };
   await registrar(ana, -4, vegetariano);

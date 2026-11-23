@@ -54,6 +54,10 @@ export const RegistroRefeicao = z
   })
   .meta({ id: 'RegistroRefeicao' });
 
+export const EntradaAtualizacaoRegistro = z
+  .object({ observacoes: textoOpcional(500).default('') })
+  .meta({ id: 'EntradaAtualizacaoRegistro' });
+
 export type EntradaRegistroDto = z.infer<typeof EntradaRegistro>;
 export type RegistroRefeicaoDto = z.infer<typeof RegistroRefeicao>;
 export type OpcaoRegistroDto = z.infer<typeof OpcaoRegistro>;

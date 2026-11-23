@@ -104,7 +104,7 @@ function paraOrganizacao(r: Record<string, any>): Organizacao {
 
 const SQL_COLABORADOR = `
   SELECT id_usuario::text AS id, id_organizacao::text AS organizacao_id, nome, cpf, setor,
-         codigo_funcionario, email, senha_hash, ativo, criado_em
+         codigo_funcionario, email, senha_hash, ativo, aprovado, criado_em
   FROM ${n('usuarios')} WHERE papel = 'colaborador'`;
 
 function paraColaborador(r: Record<string, any>): Colaborador {
@@ -118,6 +118,7 @@ function paraColaborador(r: Record<string, any>): Colaborador {
     emailCorporativo: r.email,
     senhaHash: r.senha_hash,
     ativo: r.ativo,
+    aprovado: r.aprovado,
     criadoEm: r.criado_em,
   };
 }
@@ -273,6 +274,14 @@ export function criarRepositoriosPostgres(pool: pg.Pool): Repositorios {
         });
         return { ...dados, id };
       },
+      async alterarSenha(id, senhaHash) {
+        await pool.query(
+          `UPDATE ${n('usuarios')} SET senha_hash = $2 WHERE id_usuario = (
+             SELECT id_usuario FROM ${n('usuarios')} WHERE id_organizacao = $1 AND papel = 'rh'
+             ORDER BY id_usuario LIMIT 1)`,
+          [id, senhaHash],
+        );
+      },
       async buscarPorId(id) {
         if (!idValido(id)) return null;
         return um(`${SQL_ORGANIZACAO} WHERE o.id_organizacao = $1`, [id], paraOrganizacao);
@@ -296,8 +305,8 @@ export function criarRepositoriosPostgres(pool: pg.Pool): Repositorios {
       async criar(dados) {
         const { rows } = await pool.query(
           `INSERT INTO ${n('usuarios')}
-           (id_organizacao, nome, email, senha_hash, papel, cpf, setor, codigo_funcionario, ativo, criado_em)
-           VALUES ($1, $2, $3, $4, 'colaborador', $5, $6, $7, $8, $9) RETURNING id_usuario::text AS id`,
+           (id_organizacao, nome, email, senha_hash, papel, cpf, setor, codigo_funcionario, ativo, aprovado, criado_em)
+           VALUES ($1, $2, $3, $4, 'colaborador', $5, $6, $7, $8, $9, $10) RETURNING id_usuario::text AS id`,
           [
             dados.organizacaoId,
             dados.nomeCompleto,
@@ -307,6 +316,7 @@ export function criarRepositoriosPostgres(pool: pg.Pool): Repositorios {
             dados.setor,
             dados.codigoFuncionario,
             dados.ativo,
+            dados.aprovado,
             dados.criadoEm,
           ],
         );
@@ -314,9 +324,10 @@ export function criarRepositoriosPostgres(pool: pg.Pool): Repositorios {
       },
       async atualizar(c) {
         await pool.query(
-          `UPDATE ${n('usuarios')} SET nome = $2, setor = $3, codigo_funcionario = $4, ativo = $5
+          `UPDATE ${n('usuarios')} SET nome = $2, setor = $3, codigo_funcionario = $4, ativo = $5,
+             aprovado = $6, senha_hash = $7
            WHERE id_usuario = $1 AND papel = 'colaborador'`,
-          [c.id, c.nomeCompleto, c.setor, c.codigoFuncionario, c.ativo],
+          [c.id, c.nomeCompleto, c.setor, c.codigoFuncionario, c.ativo, c.aprovado, c.senhaHash],
         );
       },
       async buscarPorId(id) {
@@ -349,7 +360,7 @@ export function criarRepositoriosPostgres(pool: pg.Pool): Repositorios {
       async buscar(colaboradorId) {
         if (!idValido(colaboradorId)) return null;
         return um(
-          `SELECT p.alimentos_evitar, p.outras_orientacoes, p.atualizado_em,
+          `SELECT p.alimentos_evitar, p.outras_orientacoes, p.consentimento_em, p.atualizado_em,
              (SELECT m.codigo FROM ${n('perfis_alimentares')} pa
               JOIN ${n('marcadores_alimentares')} m USING (id_marcador)
               WHERE pa.id_usuario = p.id_usuario AND pa.tipo_vinculo = 'preferencia' LIMIT 1) AS perfil,
@@ -365,17 +376,25 @@ export function criarRepositoriosPostgres(pool: pg.Pool): Repositorios {
             restricoes: r.restricoes,
             alimentosEvitar: r.alimentos_evitar,
             outrasOrientacoes: r.outras_orientacoes,
+            consentimentoEm: r.consentimento_em,
             atualizadoEm: r.atualizado_em,
           }),
         );
       },
+      async remover(colaboradorId) {
+        if (!idValido(colaboradorId)) return;
+        await pool.query(`DELETE FROM ${n('perfis_alimentares')} WHERE id_usuario = $1`, [colaboradorId]);
+        await pool.query(`DELETE FROM ${n('preferencias_colaborador')} WHERE id_usuario = $1`, [colaboradorId]);
+      },
       async salvar(p) {
         await emTransacao(pool, async (c) => {
           await c.query(
-            `INSERT INTO ${n('preferencias_colaborador')} (id_usuario, alimentos_evitar, outras_orientacoes, atualizado_em)
-             VALUES ($1, $2, $3, $4)
-             ON CONFLICT (id_usuario) DO UPDATE SET alimentos_evitar = $2, outras_orientacoes = $3, atualizado_em = $4`,
-            [p.colaboradorId, p.alimentosEvitar, p.outrasOrientacoes, p.atualizadoEm],
+            `INSERT INTO ${n('preferencias_colaborador')}
+               (id_usuario, alimentos_evitar, outras_orientacoes, consentimento_em, atualizado_em)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT (id_usuario) DO UPDATE
+             SET alimentos_evitar = $2, outras_orientacoes = $3, consentimento_em = $4, atualizado_em = $5`,
+            [p.colaboradorId, p.alimentosEvitar, p.outrasOrientacoes, p.consentimentoEm, p.atualizadoEm],
           );
           await c.query(`DELETE FROM ${n('perfis_alimentares')} WHERE id_usuario = $1`, [p.colaboradorId]);
           await c.query(
@@ -521,6 +540,20 @@ export function criarRepositoriosPostgres(pool: pg.Pool): Repositorios {
           ],
         );
         return rows[0] ? { ...dados, id: rows[0].id } : null;
+      },
+      async atualizar(r) {
+        await pool.query(`UPDATE ${n('consumos')} SET observacoes = $2 WHERE id_consumo = $1`, [
+          r.id,
+          r.observacoes,
+        ]);
+      },
+      async remover(id) {
+        if (!idValido(id)) return;
+        await pool.query(`DELETE FROM ${n('consumos')} WHERE id_consumo = $1`, [id]);
+      },
+      async buscarPorId(id) {
+        if (!idValido(id)) return null;
+        return um(`${SQL_REGISTRO} WHERE co.id_consumo = $1`, [id], paraRegistro);
       },
       async buscarPorRequisicao(colaboradorId, requisicaoId) {
         if (!idValido(colaboradorId)) return null;

@@ -13,6 +13,7 @@ import CardapiosColaborador from './pages/CardapiosColaborador';
 import CardapiosOrganizacao from './pages/CardapiosOrganizacao';
 import CompatibilidadeRefeicao from './pages/CompatibilidadeRefeicao';
 import Indicadores from './pages/Indicadores';
+import AlterarSenha from './pages/AlterarSenha';
 import { ErroApi } from './services/api';
 import { consultarSessao } from './services/autenticacao';
 import { encerrarSessao, eventoSessaoEncerrada, guardarSessao, lerSessao } from './services/sessao';
@@ -33,6 +34,8 @@ const titulos: Record<string, string> = {
   '/colaborador/cardapios': 'Cardápios',
   '/colaborador/compatibilidade': 'Compatibilidade das refeições',
   '/colaborador/refeicoes': 'Registro de refeições',
+  '/colaborador/senha': 'Alterar senha',
+  '/organizacao/senha': 'Alterar senha',
 };
 
 function rotaAtual() {
@@ -151,8 +154,10 @@ export default function App() {
   if (caminho === '/organizacao/cadastro')
     return <CadastroOrganizacao onCadastroConcluido={iniciarSessao} />;
   if (caminho === '/cadastro')
-    return <CadastroColaborador onCadastroConcluido={iniciarSessao} />;
+    return <CadastroColaborador />;
   if (sessao) {
+    if (caminho === '/organizacao/senha' || caminho === '/colaborador/senha')
+      return <AlterarSenha voltar={'/' + sessao.perfil} />;
     if (caminho === '/organizacao')
       return <InicioOrganizacao nome={sessao.nome} onSair={() => encerrarSessao()} />;
     if (caminho === '/organizacao/acessos')

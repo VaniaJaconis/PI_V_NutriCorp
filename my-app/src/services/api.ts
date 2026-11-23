@@ -16,7 +16,7 @@ export class ErroApi extends Error {
 }
 
 interface Opcoes {
-  metodo?: 'GET' | 'POST' | 'PUT' | 'PATCH';
+  metodo?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   corpo?: object;
   publica?: boolean;
   sinal?: AbortSignal;
@@ -57,5 +57,6 @@ export async function chamarApi<T>(
     }
     throw new ErroApi(resposta.status, erro?.codigo ?? '', mensagem, erro?.campos);
   }
+  if (resposta.status === 204) return undefined as T;
   return resposta.json() as Promise<T>;
 }

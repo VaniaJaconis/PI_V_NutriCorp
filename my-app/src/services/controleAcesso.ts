@@ -11,10 +11,20 @@ interface ColaboradorApi {
   setor: string;
   codigoFuncionario: string;
   ativo: boolean;
+  aprovado: boolean;
 }
 
-function paraTela({ id, nomeCompleto, setor, codigoFuncionario, ativo }: ColaboradorApi): ColaboradorAcesso {
-  return { id, nome: nomeCompleto, setor, codigoFuncionario, acesso: ativo ? 'Funcionário' : 'Sem acesso' };
+function paraTela({ id, nomeCompleto, setor, codigoFuncionario, ativo, aprovado }: ColaboradorApi): ColaboradorAcesso {
+  const acesso = !aprovado ? 'Aguardando aprovação' : ativo ? 'Funcionário' : 'Sem acesso';
+  return { id, nome: nomeCompleto, setor, codigoFuncionario, acesso };
+}
+
+export async function gerarSenhaTemporaria(id: string): Promise<string> {
+  const { senhaTemporaria } = await chamarApi<{ senhaTemporaria: string }>(
+    `/organizacao/colaboradores/${encodeURIComponent(id)}/senha`,
+    { metodo: 'POST' },
+  );
+  return senhaTemporaria;
 }
 
 export async function consultarAcessos(): Promise<ColaboradorAcesso[]> {

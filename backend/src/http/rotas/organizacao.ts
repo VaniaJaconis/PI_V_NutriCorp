@@ -52,5 +52,10 @@ export function rotasOrganizacao(servicos: Servicos) {
     res.json(await servicos.organizacao.alterarAcesso(organizacaoId(res), id, ativo));
   });
 
+  rotas.post('/colaboradores/:id/senha', async (req, res) => {
+    const { id } = validar(ParametroId, req.params);
+    res.json(await servicos.organizacao.redefinirSenha(organizacaoId(res), id));
+  });
+
   return rotas;
 }

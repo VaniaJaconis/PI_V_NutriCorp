@@ -59,6 +59,12 @@
   outline: 3px solid #40782b;
   outline-offset: 3px;
 }
+.login-esqueci {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: #555;
+  text-align: center;
+}
 @media (max-width: 320px) {
   .pagina-login {
     padding-top: 32px;

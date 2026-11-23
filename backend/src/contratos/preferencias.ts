@@ -19,6 +19,11 @@ export const EntradaPreferencias = z
       }),
     restricoes: z.array(RestricaoAlimentar).max(6).default([]),
     outrasOrientacoes: textoOpcional(1000).default(''),
+    consentimento: z.literal(true, {
+      error: 'Autorize o uso destes dados para salvar.',
+    }).meta({
+      description: 'Aceite do colaborador para o tratamento dos dados de saúde (LGPD).',
+    }),
   })
   .meta({ id: 'EntradaPreferencias' });
 
@@ -28,6 +33,7 @@ export const PreferenciasColaborador = z
     alimentosEvitar: z.string(),
     restricoes: z.array(RestricaoAlimentar),
     outrasOrientacoes: z.string(),
+    consentimentoEm: Instante.nullable(),
     atualizadoEm: Instante.nullable().meta({
       description: 'null enquanto o colaborador não salvou as preferências.',
     }),

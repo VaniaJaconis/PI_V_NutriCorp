@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   consultarPreferencias,
+  excluirPreferencias,
   salvarPreferencias,
 } from '../services/preferencias';
 import type {
@@ -32,6 +33,7 @@ export default function PreferenciasColaborador() {
   const [erro, setErro] = useState('');
   const [aviso, setAviso] = useState('');
   const [tentativa, setTentativa] = useState(0);
+  const [consentimento, setConsentimento] = useState(false);
   const bloqueio = useRef(false);
 
   useEffect(() => {
@@ -40,7 +42,9 @@ export default function PreferenciasColaborador() {
     setErro('');
     consultarPreferencias()
       .then((resultado) => {
-        if (ativo) setDados(resultado);
+        if (!ativo) return;
+        setDados(resultado);
+        setConsentimento(Boolean(resultado.consentimentoEm));
       })
       .catch(() => {
         if (ativo)
@@ -76,6 +80,11 @@ export default function PreferenciasColaborador() {
   async function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     if (!dados || bloqueio.current) return;
+    if (!consentimento) {
+      setErro('Autorize o uso destes dados para salvar.');
+      document.getElementById('consentimento')?.focus();
+      return;
+    }
     bloqueio.current = true;
     setSalvando(true);
     setErro('');
@@ -85,6 +94,7 @@ export default function PreferenciasColaborador() {
         ...dados,
         alimentosEvitar: dados.alimentosEvitar.trim(),
         outrasOrientacoes: dados.outrasOrientacoes.trim(),
+        consentimento,
       });
       setDados(resultado.preferencias);
       setAviso('Preferências salvas com sucesso.');
@@ -92,6 +102,24 @@ export default function PreferenciasColaborador() {
       setErro(
         'Não foi possível salvar suas preferências. Suas escolhas foram mantidas. Tente novamente.',
       );
+    } finally {
+      bloqueio.current = false;
+      setSalvando(false);
+    }
+  }
+
+  async function excluir() {
+    if (bloqueio.current || !window.confirm('Excluir suas preferências e restrições?')) return;
+    bloqueio.current = true;
+    setSalvando(true);
+    setErro('');
+    setAviso('');
+    try {
+      setDados(await excluirPreferencias());
+      setConsentimento(false);
+      setAviso('Seus dados de preferências foram excluídos.');
+    } catch {
+      setErro('Não foi possível excluir seus dados. Tente novamente.');
     } finally {
       bloqueio.current = false;
       setSalvando(false);
@@ -238,6 +266,21 @@ export default function PreferenciasColaborador() {
             </div>
             <footer className="preferencias-rodape">
               <p>Suas escolhas serão usadas nos alertas de compatibilidade.</p>
+              <label className="preferencias-consentimento" htmlFor="consentimento">
+                <input
+                  id="consentimento"
+                  type="checkbox"
+                  checked={consentimento}
+                  onChange={(e) => {
+                    setConsentimento(e.target.checked);
+                    setErro('');
+                  }}
+                />
+                Autorizo o NutriCorp a usar estes dados de saúde apenas para gerar os
+                alertas de compatibilidade. Minha organização só vê indicadores
+                agregados, nunca minhas escolhas individuais. Posso excluir estes
+                dados a qualquer momento.
+              </label>
               <div className="preferencias-acoes">
                 <button
                   type="button"
@@ -252,6 +295,11 @@ export default function PreferenciasColaborador() {
                   {salvando ? 'Salvando…' : 'Salvar preferências'}
                 </button>
               </div>
+              {dados.consentimentoEm && (
+                <button type="button" className="preferencias-excluir" onClick={() => void excluir()}>
+                  Excluir meus dados de preferências
+                </button>
+              )}
             </footer>
           </fieldset>
           <p className="preferencias-feedback" role="status">

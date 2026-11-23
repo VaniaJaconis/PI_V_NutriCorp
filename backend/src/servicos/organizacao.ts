@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import {
   MAX_DIAS_INDICADORES,
   type ColaboradorResumoDto,
@@ -8,6 +9,7 @@ import type { Colaborador } from '../dominio/entidades.js';
 import { erros } from '../erros.js';
 import type { Repositorios } from '../repositorios/tipos.js';
 import { contarDias, diaSemanaCurto, diasNoIntervalo, hoje, somarDias } from '../util/datas.js';
+import { gerarHashSenha } from './senhas.js';
 
 const percentual = (parte: number, total: number) =>
   total ? Math.round((parte / total) * 100) : 0;
@@ -29,12 +31,19 @@ function distribuir(valores: number[]): number[] {
 }
 
 function resumo(colaborador: Colaborador): ColaboradorResumoDto {
-  const { id, nomeCompleto, emailCorporativo, setor, codigoFuncionario, ativo, criadoEm } =
+  const { id, nomeCompleto, emailCorporativo, setor, codigoFuncionario, ativo, aprovado, criadoEm } =
     colaborador;
-  return { id, nomeCompleto, emailCorporativo, setor, codigoFuncionario, ativo, criadoEm };
+  return { id, nomeCompleto, emailCorporativo, setor, codigoFuncionario, ativo, aprovado, criadoEm };
 }
 
 export function criarServicoOrganizacao(repos: Repositorios) {
+  async function daOrganizacao(organizacaoId: string, colaboradorId: string) {
+    const colaborador = await repos.colaboradores.buscarPorId(colaboradorId);
+    if (!colaborador || colaborador.organizacaoId !== organizacaoId)
+      throw erros.naoEncontrado('Colaborador não encontrado.');
+    return colaborador;
+  }
+
   return {
     async consolidarIndicadores(
       organizacaoId: string,
@@ -94,16 +103,24 @@ export function criarServicoOrganizacao(repos: Repositorios) {
     },
 
     async listarColaboradores(organizacaoId: string) {
-      return (await repos.colaboradores.listarPorOrganizacao(organizacaoId)).map(resumo);
+      const lista = await repos.colaboradores.listarPorOrganizacao(organizacaoId);
+      return lista.sort((a, b) => Number(a.aprovado) - Number(b.aprovado)).map(resumo);
     },
 
     async alterarAcesso(organizacaoId: string, colaboradorId: string, ativo: boolean) {
-      const colaborador = await repos.colaboradores.buscarPorId(colaboradorId);
-      if (!colaborador || colaborador.organizacaoId !== organizacaoId)
-        throw erros.naoEncontrado('Colaborador não encontrado.');
+      const colaborador = await daOrganizacao(organizacaoId, colaboradorId);
       colaborador.ativo = ativo;
+      if (ativo) colaborador.aprovado = true;
       await repos.colaboradores.atualizar(colaborador);
       return resumo(colaborador);
+    },
+
+    async redefinirSenha(organizacaoId: string, colaboradorId: string) {
+      const colaborador = await daOrganizacao(organizacaoId, colaboradorId);
+      const senhaTemporaria = randomBytes(9).toString('base64url');
+      colaborador.senhaHash = await gerarHashSenha(senhaTemporaria);
+      await repos.colaboradores.atualizar(colaborador);
+      return { senhaTemporaria };
     },
   };
 }

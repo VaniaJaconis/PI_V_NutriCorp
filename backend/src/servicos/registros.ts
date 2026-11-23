@@ -18,6 +18,13 @@ function paraDto(registro: RegistroRefeicao): RegistroRefeicaoDto {
 }
 
 export function criarServicoRegistros(repos: Repositorios) {
+  async function doColaborador(sessao: SessaoDto, id: string) {
+    const registro = await repos.registros.buscarPorId(id);
+    if (!registro || registro.colaboradorId !== sessao.id)
+      throw erros.naoEncontrado('Registro não encontrado.');
+    return registro;
+  }
+
   return {
     async listarOpcoes(sessao: SessaoDto, data = hoje()): Promise<OpcaoRegistroDto[]> {
       const [cardapios, preferencias] = await Promise.all([
@@ -82,6 +89,18 @@ export function criarServicoRegistros(repos: Repositorios) {
       if (registro) return { registro: paraDto(registro), criado: true };
       const existente = await repos.registros.buscarPorRequisicao(sessao.id, dados.requisicaoId);
       return { registro: paraDto(existente!), criado: false };
+    },
+
+    async atualizar(sessao: SessaoDto, id: string, observacoes: string) {
+      const registro = await doColaborador(sessao, id);
+      registro.observacoes = observacoes;
+      await repos.registros.atualizar(registro);
+      return paraDto(registro);
+    },
+
+    async remover(sessao: SessaoDto, id: string) {
+      await doColaborador(sessao, id);
+      await repos.registros.remover(id);
     },
   };
 }

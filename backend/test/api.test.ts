@@ -90,10 +90,25 @@ describe.each(bancos)('fluxo principal da API (%s)', (_nome, url) => {
     const colab = await api().post('/api/colaboradores').send(colaborador);
     expect(colab.status).toBe(201);
     expect(colab.body).toMatchObject({
-      perfil: 'colaborador',
+      situacao: 'pendente',
       organizacao: { nome: 'Alfa' },
     });
+    expect(colab.body).not.toHaveProperty('token');
     colaboradorId = colab.body.id;
+
+    const pendente = await api()
+      .post('/api/auth/login')
+      .send({ usuario: colaborador.emailCorporativo, senha: SENHA });
+    expect(pendente.status).toBe(403);
+    expect(pendente.body.erro.codigo).toBe('acesso_pendente');
+
+    const lista = await api().get('/api/organizacao/colaboradores').set(bearer(tokenOrg));
+    expect(lista.body[0]).toMatchObject({ id: colaboradorId, aprovado: false, ativo: false });
+    const aprovado = await api()
+      .patch(`/api/organizacao/colaboradores/${colaboradorId}`)
+      .set(bearer(tokenOrg))
+      .send({ ativo: true });
+    expect(aprovado.body).toMatchObject({ aprovado: true, ativo: true });
   });
 
   it('valida o cadastro com mensagens por campo', async () => {
@@ -147,16 +162,22 @@ describe.each(bancos)('fluxo principal da API (%s)', (_nome, url) => {
     ).toBe(403);
   });
 
-  it('salva e consulta preferências', async () => {
+  it('salva e consulta preferências só com consentimento', async () => {
     const padrao = await api().get('/api/colaborador/preferencias').set(bearer(tokenColab));
-    expect(padrao.body).toMatchObject({ perfil: 'sem_preferencia', atualizadoEm: null });
+    expect(padrao.body).toMatchObject({ perfil: 'sem_preferencia', atualizadoEm: null, consentimentoEm: null });
+
+    const entrada = { perfil: 'vegetariana', restricoes: ['lactose', 'lactose'], alimentosEvitar: 'pimentão' };
+    const semAceite = await api().put('/api/colaborador/preferencias').set(bearer(tokenColab)).send(entrada);
+    expect(semAceite.status).toBe(422);
+    expect(semAceite.body.erro.campos.consentimento).toBe('Autorize o uso destes dados para salvar.');
 
     const salvo = await api()
       .put('/api/colaborador/preferencias')
       .set(bearer(tokenColab))
-      .send({ perfil: 'vegetariana', restricoes: ['lactose', 'lactose'], alimentosEvitar: 'pimentão' });
+      .send({ ...entrada, consentimento: true });
     expect(salvo.status).toBe(200);
     expect(salvo.body.preferencias.restricoes).toEqual(['lactose']);
+    expect(salvo.body.preferencias.consentimentoEm).toBeTruthy();
   });
 
   it('exige todos os campos para publicar, mas aceita rascunho só com nome', async () => {
@@ -307,6 +328,53 @@ describe.each(bancos)('fluxo principal da API (%s)', (_nome, url) => {
     }
   });
 
+  it('edita e exclui o próprio registro', async () => {
+    const novo = await api()
+      .post('/api/colaborador/registros')
+      .set(bearer(tokenColab))
+      .send({ data: hoje(), tipo: 'Almoço', opcaoId: vegetarianoId, requisicaoId: 'req-editar' });
+    const editado = await api()
+      .patch(`/api/colaborador/registros/${novo.body.id}`)
+      .set(bearer(tokenColab))
+      .send({ observacoes: 'Meia porção.' });
+    expect(editado.body.observacoes).toBe('Meia porção.');
+
+    const removido = await api().delete(`/api/colaborador/registros/${novo.body.id}`).set(bearer(tokenColab));
+    expect(removido.status).toBe(204);
+    const historico = await api().get('/api/colaborador/registros').set(bearer(tokenColab));
+    expect(historico.body.map((r: { id: string }) => r.id)).not.toContain(novo.body.id);
+    expect((await api().delete('/api/colaborador/registros/999').set(bearer(tokenColab))).status).toBe(404);
+  });
+
+  it('gera senha temporária e permite trocar a senha', async () => {
+    const gerada = await api()
+      .post(`/api/organizacao/colaboradores/${colaboradorId}/senha`)
+      .set(bearer(tokenOrg));
+    expect(gerada.body.senhaTemporaria.length).toBeGreaterThanOrEqual(8);
+
+    const login = await api()
+      .post('/api/auth/login')
+      .send({ usuario: colaborador.emailCorporativo, senha: gerada.body.senhaTemporaria });
+    expect(login.status).toBe(200);
+
+    const errada = await api()
+      .put('/api/auth/senha')
+      .set(bearer(login.body.token))
+      .send({ senhaAtual: 'errada123', novaSenha: SENHA });
+    expect(errada.body.erro.campos.senhaAtual).toBe('Senha atual incorreta.');
+    const trocada = await api()
+      .put('/api/auth/senha')
+      .set(bearer(login.body.token))
+      .send({ senhaAtual: gerada.body.senhaTemporaria, novaSenha: SENHA });
+    expect(trocada.status).toBe(204);
+    tokenColab = login.body.token;
+  });
+
+  it('exclui as preferências a pedido do colaborador', async () => {
+    const resposta = await api().delete('/api/colaborador/preferencias').set(bearer(tokenColab));
+    expect(resposta.body).toMatchObject({ perfil: 'sem_preferencia', restricoes: [], consentimentoEm: null });
+  });
+
   it('isola os dados entre organizações', async () => {
     const outra = await api().post('/api/organizacoes').send({
       ...organizacao,
@@ -355,6 +423,14 @@ describe('infraestrutura', () => {
     const resposta = await request(app).get('/api/openapi.json');
     expect(resposta.body.openapi).toBe('3.0.3');
     expect(Object.keys(resposta.body.paths)).toContain('/api/organizacao/indicadores');
+  });
+
+  it('limita as tentativas de login', async () => {
+    const { app } = await montar();
+    let ultima = 0;
+    for (let i = 0; i < 21; i++)
+      ultima = (await request(app).post('/api/auth/login').send({ usuario: 'x@x.com', senha: 'errada123' })).status;
+    expect(ultima).toBe(429);
   });
 });
 

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
+  atualizarRegistro,
   consultarHistoricoRefeicoes,
   consultarOpcoesRegistro,
+  excluirRegistro,
   registrarRefeicao,
 } from '../services/registrosRefeicoes';
 import { ErroApi } from '../services/api';
@@ -168,6 +170,27 @@ export default function RegistroRefeicoes({
       setEnviando(false);
     }
   }
+  async function editar(item: RegistroRefeicao) {
+    const observacoes = window.prompt('Observações do registro', item.observacoes);
+    if (observacoes === null) return;
+    try {
+      const atualizado = await atualizarRegistro(item.id, observacoes.trim().slice(0, 500));
+      setHistorico((anterior) => anterior.map((r) => (r.id === atualizado.id ? atualizado : r)));
+      setMensagem('Registro atualizado.');
+    } catch {
+      setErroEnvio('Não foi possível atualizar o registro. Tente novamente.');
+    }
+  }
+  async function excluir(item: RegistroRefeicao) {
+    if (!window.confirm(`Excluir o registro de ${formatarData(item.data)} (${item.nomeRefeicao})?`)) return;
+    try {
+      await excluirRegistro(item.id);
+      setHistorico((anterior) => anterior.filter((r) => r.id !== item.id));
+      setMensagem('Registro excluído.');
+    } catch {
+      setErroEnvio('Não foi possível excluir o registro. Tente novamente.');
+    }
+  }
   const atributos = (campo: keyof ErrosRegistro) => ({
     'aria-invalid': Boolean(erros[campo]),
     'aria-describedby': erros[campo] ? `registro-${campo}-erro` : undefined,
@@ -331,6 +354,7 @@ export default function RegistroRefeicoes({
                       <th scope="col">Data / registro</th>
                       <th scope="col">Refeição consumida</th>
                       <th scope="col">Energia</th>
+                      <th scope="col">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -349,11 +373,22 @@ export default function RegistroRefeicoes({
                         </td>
                         <td>
                           {item.tipo} · {item.nomeRefeicao}
+                          {item.observacoes && (
+                            <span className="registro-observacao">{item.observacoes}</span>
+                          )}
                         </td>
                         <td>
                           {item.energia === null
                             ? 'Não informada'
                             : `${item.energia.toLocaleString('pt-BR')} kcal`}
+                        </td>
+                        <td className="registro-tabela-acoes">
+                          <button type="button" onClick={() => void editar(item)}>
+                            Editar
+                          </button>
+                          <button type="button" onClick={() => void excluir(item)}>
+                            Excluir
+                          </button>
                         </td>
                       </tr>
                     ))}

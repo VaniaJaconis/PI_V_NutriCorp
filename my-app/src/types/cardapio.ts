@@ -19,6 +19,7 @@ export interface Prato {
 export interface Refeicao {
   id: string;
   titulo: string;
+  data?: string | null;
   pratos: Prato[];
   avaliacoes?: AvaliacaoCompatibilidade[];
 }

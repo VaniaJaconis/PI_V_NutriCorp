@@ -8,12 +8,13 @@ export default function Indicadores() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
   const [tentativa, setTentativa] = useState(0);
+  const [dias, setDias] = useState(7);
 
   useEffect(() => {
     let ativo = true;
     setCarregando(true);
     setErro('');
-    consultarIndicadoresConsolidados()
+    consultarIndicadoresConsolidados(dias)
       .then((resultado) => {
         if (ativo) setDados(resultado);
       })
@@ -29,7 +30,7 @@ export default function Indicadores() {
     return () => {
       ativo = false;
     };
-  }, [tentativa]);
+  }, [tentativa, dias]);
 
   const resumo = dados
     ? [
@@ -61,6 +62,14 @@ export default function Indicadores() {
       <p className="indicadores-introducao">
         Acompanhe a adesão e o consumo de refeições da organização.
       </p>
+      <label className="indicadores-periodo">
+        Período
+        <select value={dias} onChange={(e) => setDias(Number(e.target.value))}>
+          <option value={7}>Últimos 7 dias</option>
+          <option value={15}>Últimos 15 dias</option>
+          <option value={30}>Últimos 30 dias</option>
+        </select>
+      </label>
 
       <div className="indicadores-painel">
         {carregando ? (
@@ -97,7 +106,7 @@ export default function Indicadores() {
                 <h2 id="titulo-registros">Refeições registradas por dia</h2>
                 {dados?.registrosPorDia.length ? (
                   <div
-                    className="grafico-barras"
+                    className={`grafico-barras${dados.registrosPorDia.length > 7 ? ' grafico-muitos' : ''}`}
                     role="img"
                     aria-label="Gráfico de refeições registradas por dia"
                   >

@@ -40,6 +40,17 @@ body {
   font-size: 18px;
   line-height: 1;
 }
+.alterar-senha-voltar {
+  text-decoration: none;
+}
+.inicio-alterar-senha {
+  position: absolute;
+  top: 32px;
+  right: 24px;
+  color: var(--verde);
+  font-size: 15px;
+  font-weight: 650;
+}
 .cadastro {
   max-width: 473px;
   margin: 0 auto;

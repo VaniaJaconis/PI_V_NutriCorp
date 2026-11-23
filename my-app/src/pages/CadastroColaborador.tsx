@@ -1,7 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { cadastrarColaborador } from '../services/colaboradores';
 import { ErroApi } from '../services/api';
-import type { ResultadoLogin } from '../types/autenticacao';
 import type { NovoColaborador } from '../types/colaborador';
 import {
   formatarCpf,
@@ -37,11 +36,7 @@ const campos = [
   { nome: 'senha', titulo: 'Senha', autocomplete: 'new-password' },
 ] as const;
 
-interface Props {
-  onCadastroConcluido?: (resultado: ResultadoLogin) => void;
-}
-
-export default function CadastroColaborador({ onCadastroConcluido }: Props) {
+export default function CadastroColaborador() {
   const [dados, setDados] = useState<NovoColaborador>(vazio);
   const [erros, setErros] = useState<ErrosCadastro>({});
   const [estado, setEstado] = useState<
@@ -87,8 +82,7 @@ export default function CadastroColaborador({ onCadastroConcluido }: Props) {
       });
       setDados(vazio);
       setEstado('sucesso');
-      setMensagem('Cadastro realizado com sucesso.');
-      onCadastroConcluido?.(resultado);
+      setMensagem(resultado.mensagem);
     } catch (erro) {
       setEstado('erro');
       if (erro instanceof ErroApi && erro.campos) {
@@ -117,11 +111,10 @@ export default function CadastroColaborador({ onCadastroConcluido }: Props) {
             <button
               type="button"
               onClick={() => {
-                setEstado('inicial');
-                setMensagem('');
+                window.location.hash = '/login';
               }}
             >
-              Voltar ao cadastro
+              Ir para o login
             </button>
           </div>
         ) : (

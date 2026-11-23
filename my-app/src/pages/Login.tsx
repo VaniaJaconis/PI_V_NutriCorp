@@ -141,6 +141,9 @@ export default function Login({ onEntrar, mensagemSessao }: Props) {
           </p>
         )}
       </form>
+      <p className="login-esqueci">
+        Esqueceu a senha? Peça ao RH da sua organização uma senha temporária.
+      </p>
       <nav className="login-cadastros" aria-label="Opções de cadastro">
         <a
           href="#/cadastro"

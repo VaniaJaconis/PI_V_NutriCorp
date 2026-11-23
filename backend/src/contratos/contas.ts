@@ -103,6 +103,26 @@ export const ResultadoLogin = Sessao.extend({
     'Também é a resposta dos cadastros: após cadastrar, o usuário já fica autenticado.',
 });
 
+export const ResultadoCadastroColaborador = z
+  .object({
+    id: Id,
+    nome: z.string(),
+    organizacao: OrganizacaoResumo,
+    situacao: z.literal('pendente'),
+    mensagem: z.string(),
+  })
+  .meta({
+    id: 'ResultadoCadastroColaborador',
+    description: 'O colaborador só consegue entrar depois que a organização aprovar o cadastro.',
+  });
+
+export const EntradaAlterarSenha = z
+  .object({
+    senhaAtual: z.string({ error: 'Informe a senha atual.' }).min(1, { error: 'Informe a senha atual.' }),
+    novaSenha: Senha,
+  })
+  .meta({ id: 'EntradaAlterarSenha' });
+
 export type NovaOrganizacaoDto = z.infer<typeof NovaOrganizacao>;
 export type NovoColaboradorDto = z.infer<typeof NovoColaborador>;
 export type CredenciaisDto = z.infer<typeof Credenciais>;

@@ -189,6 +189,51 @@
           "senha"
         ]
       },
+      "ResultadoCadastroColaborador": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "organizacao": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+              },
+              "nome": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "nome"
+            ]
+          },
+          "situacao": {
+            "type": "string",
+            "enum": [
+              "pendente"
+            ]
+          },
+          "mensagem": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nome",
+          "organizacao",
+          "situacao",
+          "mensagem"
+        ],
+        "description": "O colaborador só consegue entrar depois que a organização aprovar o cadastro."
+      },
       "NovoColaborador": {
         "type": "object",
         "properties": {
@@ -307,6 +352,26 @@
           "nome",
           "perfil",
           "organizacao"
+        ]
+      },
+      "EntradaAlterarSenha": {
+        "type": "object",
+        "properties": {
+          "senhaAtual": {
+            "type": "string",
+            "minLength": 1
+          },
+          "novaSenha": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "format": "password",
+            "example": "NutriCorp123!"
+          }
+        },
+        "required": [
+          "senhaAtual",
+          "novaSenha"
         ]
       },
       "Refeicao": {
@@ -571,6 +636,12 @@
           "outrasOrientacoes": {
             "type": "string"
           },
+          "consentimentoEm": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": "2026-11-20T15:15:00.000Z"
+          },
           "atualizadoEm": {
             "type": "string",
             "nullable": true,
@@ -584,6 +655,7 @@
           "alimentosEvitar",
           "restricoes",
           "outrasOrientacoes",
+          "consentimentoEm",
           "atualizadoEm"
         ]
       },
@@ -631,10 +703,18 @@
             "type": "string",
             "maxLength": 1000,
             "default": ""
+          },
+          "consentimento": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Aceite do colaborador para o tratamento dos dados de saúde (LGPD)."
           }
         },
         "required": [
-          "perfil"
+          "perfil",
+          "consentimento"
         ]
       },
       "CompatibilidadeRefeicao": {
@@ -844,6 +924,16 @@
           "opcaoId",
           "requisicaoId"
         ]
+      },
+      "EntradaAtualizacaoRegistro": {
+        "type": "object",
+        "properties": {
+          "observacoes": {
+            "type": "string",
+            "maxLength": 500,
+            "default": ""
+          }
+        }
       },
       "CardapioOrganizacao": {
         "type": "object",
@@ -1286,6 +1376,10 @@
           "ativo": {
             "type": "boolean"
           },
+          "aprovado": {
+            "type": "boolean",
+            "description": "false enquanto o cadastro aguarda aprovação."
+          },
           "criadoEm": {
             "type": "string",
             "format": "date-time",
@@ -1299,6 +1393,7 @@
           "setor",
           "codigoFuncionario",
           "ativo",
+          "aprovado",
           "criadoEm"
         ]
       },
@@ -1311,6 +1406,18 @@
         },
         "required": [
           "ativo"
+        ],
+        "description": "ativo: true também aprova um cadastro pendente."
+      },
+      "ResultadoSenhaTemporaria": {
+        "type": "object",
+        "properties": {
+          "senhaTemporaria": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "senhaTemporaria"
         ]
       }
     },
@@ -1405,7 +1512,7 @@
           "Cadastro e acesso"
         ],
         "summary": "Cadastrar colaborador",
-        "description": "Tela: Cadastro do colaborador. \"empresa\" deve identificar uma organização já cadastrada. Já devolve a sessão autenticada.",
+        "description": "Tela: Cadastro do colaborador. \"empresa\" deve identificar uma organização já cadastrada. O acesso só é liberado depois que a organização aprovar.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1418,11 +1525,11 @@
         },
         "responses": {
           "201": {
-            "description": "Colaborador cadastrado.",
+            "description": "Cadastro enviado para aprovação.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResultadoLogin"
+                  "$ref": "#/components/schemas/ResultadoCadastroColaborador"
                 }
               }
             }
@@ -1489,7 +1596,7 @@
             }
           },
           "403": {
-            "description": "Acesso do colaborador desativado pela organização.",
+            "description": "Cadastro aguardando aprovação ou acesso desativado pela organização.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1500,6 +1607,16 @@
           },
           "422": {
             "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Muitas tentativas. Limite de 20 a cada 15 minutos.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1546,6 +1663,54 @@
           },
           "403": {
             "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/senha": {
+      "put": {
+        "tags": [
+          "Cadastro e acesso"
+        ],
+        "summary": "Alterar a própria senha",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntradaAlterarSenha"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Senha alterada."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1746,6 +1911,7 @@
           "Colaborador"
         ],
         "summary": "Salvar preferências e restrições",
+        "description": "Exige \"consentimento\": true (dados de saúde, LGPD).",
         "security": [
           {
             "bearerAuth": []
@@ -1794,6 +1960,49 @@
           },
           "422": {
             "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Colaborador"
+        ],
+        "summary": "Excluir preferências e restrições",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados excluídos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferenciasColaborador"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2142,6 +2351,149 @@
           },
           "422": {
             "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/colaborador/registros/{id}": {
+      "patch": {
+        "tags": [
+          "Colaborador"
+        ],
+        "summary": "Editar observações do registro",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntradaAtualizacaoRegistro"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registro atualizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistroRefeicao"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado (ou de outra organização).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Colaborador"
+        ],
+        "summary": "Excluir registro",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Excluído."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado (ou de outra organização).",
             "content": {
               "application/json": {
                 "schema": {
@@ -2653,7 +3005,7 @@
         "tags": [
           "Organização"
         ],
-        "summary": "Ativar ou desativar o acesso do colaborador",
+        "summary": "Aprovar, ativar ou desativar o acesso do colaborador",
         "security": [
           {
             "bearerAuth": []
@@ -2723,6 +3075,72 @@
           },
           "422": {
             "description": "Dados inválidos. \"campos\" traz a mensagem de cada campo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/organizacao/colaboradores/{id}/senha": {
+      "post": {
+        "tags": [
+          "Organização"
+        ],
+        "summary": "Gerar senha temporária para o colaborador",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "0b6f1d8e-3c2a-4f57-9a8e-1f2d3c4b5a69"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Senha gerada. Repasse ao colaborador.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoSenhaTemporaria"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Perfil sem permissão para este recurso, ou acesso desativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recurso não encontrado (ou de outra organização).",
             "content": {
               "application/json": {
                 "schema": {

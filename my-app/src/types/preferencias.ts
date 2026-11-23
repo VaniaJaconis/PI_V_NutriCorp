@@ -7,4 +7,5 @@ export interface PreferenciasColaborador {
   alimentosEvitar: string;
   restricoes: RestricaoAlimentar[];
   outrasOrientacoes: string;
+  consentimentoEm?: string | null;
 }

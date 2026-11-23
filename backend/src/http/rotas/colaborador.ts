@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { EntradaSelecaoAlternativa } from '../../contratos/cardapios.js';
 import { ParametroId } from '../../contratos/comum.js';
 import { EntradaPreferencias } from '../../contratos/preferencias.js';
-import { EntradaRegistro, FiltroOpcoesRegistro } from '../../contratos/registros.js';
+import { EntradaAtualizacaoRegistro, EntradaRegistro, FiltroOpcoesRegistro } from '../../contratos/registros.js';
 import type { Servicos } from '../../servicos/index.js';
 import { exigirPerfil, exigirSessao, sessaoDe, validar } from '../middlewares.js';
 
@@ -17,6 +17,10 @@ export function rotasColaborador(servicos: Servicos) {
   rotas.put('/preferencias', async (req, res) => {
     const dados = validar(EntradaPreferencias, req.body);
     res.json(await servicos.preferencias.salvar(sessaoDe(res).id, dados));
+  });
+
+  rotas.delete('/preferencias', async (_req, res) => {
+    res.json(await servicos.preferencias.excluir(sessaoDe(res).id));
   });
 
   rotas.get('/cardapios/:id/compatibilidade', async (req, res) => {
@@ -45,6 +49,18 @@ export function rotasColaborador(servicos: Servicos) {
     const dados = validar(EntradaRegistro, req.body);
     const { registro, criado } = await servicos.registros.registrar(sessaoDe(res), dados);
     res.status(criado ? 201 : 200).json(registro);
+  });
+
+  rotas.patch('/registros/:id', async (req, res) => {
+    const { id } = validar(ParametroId, req.params);
+    const { observacoes } = validar(EntradaAtualizacaoRegistro, req.body);
+    res.json(await servicos.registros.atualizar(sessaoDe(res), id, observacoes));
+  });
+
+  rotas.delete('/registros/:id', async (req, res) => {
+    const { id } = validar(ParametroId, req.params);
+    await servicos.registros.remover(sessaoDe(res), id);
+    res.status(204).end();
   });
 
   return rotas;

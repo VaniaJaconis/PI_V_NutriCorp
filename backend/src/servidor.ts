@@ -22,7 +22,11 @@ if (config.databaseUrl) {
 }
 
 const servicos = criarServicos(repositorios, config);
-if (config.seedDemo) await popularDadosDemo(servicos, repositorios);
+if (config.seedDemo) {
+  const atualizarDemo = () => popularDadosDemo(servicos, repositorios).catch(console.error);
+  await atualizarDemo();
+  setInterval(atualizarDemo, 6 * 60 * 60 * 1000);
+}
 
 criarApp(servicos, config).listen(config.porta, () => {
   console.log(`NutriCorp: http://localhost:${config.porta}`);

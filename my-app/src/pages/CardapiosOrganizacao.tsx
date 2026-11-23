@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { consultarCardapios } from '../services/cardapios';
 import type { Refeicao } from '../types/cardapio';
+import FiltroDia, { diaInicial, diasDasRefeicoes } from '../components/FiltroDia';
 import '../styles/cardapios.css';
 
 export default function CardapiosOrganizacao() {
@@ -10,6 +11,7 @@ export default function CardapiosOrganizacao() {
   const [refeicoes, setRefeicoes] = useState<Refeicao[]>([]);
   const [refeicaoId, setRefeicaoId] = useState('');
   const [pratoId, setPratoId] = useState('');
+  const [dia, setDia] = useState('');
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
   const [tentativa, setTentativa] = useState(0);
@@ -22,8 +24,11 @@ export default function CardapiosOrganizacao() {
       .then((lista) => {
         if (!ativo) return;
         setRefeicoes(lista);
+        const preferida = lista.find((item) => item.id === refeicaoInicialId);
+        const diaEscolhido = diaInicial(diasDasRefeicoes(lista), preferida ? preferida.data ?? '' : undefined);
+        setDia(diaEscolhido);
         const inicial =
-          lista.find((item) => item.id === refeicaoInicialId) ?? lista[0];
+          preferida ?? lista.find((item) => (item.data ?? '') === diaEscolhido);
         setRefeicaoId(inicial?.id ?? '');
         setPratoId(inicial?.pratos[0]?.id ?? '');
       })
@@ -43,6 +48,15 @@ export default function CardapiosOrganizacao() {
 
   const refeicao = refeicoes.find((item) => item.id === refeicaoId);
   const prato = refeicao?.pratos.find((item) => item.id === pratoId);
+  const dias = diasDasRefeicoes(refeicoes);
+  const visiveis = refeicoes.filter((item) => (item.data ?? '') === dia);
+
+  function escolherDia(novo: string) {
+    setDia(novo);
+    const primeira = refeicoes.find((item) => (item.data ?? '') === novo);
+    setRefeicaoId(primeira?.id ?? '');
+    setPratoId(primeira?.pratos[0]?.id ?? '');
+  }
 
   return (
     <main className="pagina-cardapios">
@@ -92,17 +106,18 @@ export default function CardapiosOrganizacao() {
         </div>
       ) : (
         <>
+          <FiltroDia dias={dias} valor={dia} onChange={escolherDia} />
           <div className="cardapios-colunas">
             <section aria-labelledby="titulo-refeicoes">
               <h2 id="titulo-refeicoes">Refeições</h2>
               <div className="cardapios-painel">
-                {refeicoes.length === 0 ? (
+                {visiveis.length === 0 ? (
                   <p className="cardapios-vazio">
                     Nenhuma refeição disponível.
                   </p>
                 ) : (
                   <ul className="cardapios-lista">
-                    {refeicoes.map((item) => (
+                    {visiveis.map((item) => (
                       <li key={item.id}>
                         <button
                           type="button"

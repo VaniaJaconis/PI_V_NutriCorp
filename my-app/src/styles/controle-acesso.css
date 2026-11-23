@@ -169,3 +169,26 @@
     min-width: 620px;
   }
 }
+.controle-acesso-tabela-rolagem th:nth-child(1),
+.controle-acesso-tabela-rolagem td:nth-child(1) {
+  width: 36%;
+}
+.controle-acesso-tabela-rolagem th:nth-child(5),
+.controle-acesso-tabela-rolagem td:nth-child(5) {
+  width: 14%;
+}
+.controle-acesso-tabela-rolagem tr.controle-acesso-pendente td {
+  background: #fff6d6;
+}
+.controle-acesso-senha {
+  width: 100%;
+  min-height: 0;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.controle-acesso-senha:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

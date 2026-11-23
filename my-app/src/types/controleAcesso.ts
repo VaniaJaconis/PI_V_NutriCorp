@@ -9,7 +9,7 @@ export interface ColaboradorAcesso {
   id: string;
   nome: string;
   setor: string;
-  acesso: PerfilAcesso;
+  acesso: PerfilAcesso | 'Aguardando aprovação';
   codigoFuncionario: string;
 }
 

@@ -6,7 +6,11 @@ export function consultarPreferencias(): Promise<PreferenciasColaborador> {
 }
 
 export function salvarPreferencias(
-  dados: PreferenciasColaborador,
+  dados: PreferenciasColaborador & { consentimento: boolean },
 ): Promise<{ modo: 'api'; preferencias: PreferenciasColaborador }> {
   return chamarApi('/colaborador/preferencias', { metodo: 'PUT', corpo: dados });
+}
+
+export function excluirPreferencias(): Promise<PreferenciasColaborador> {
+  return chamarApi('/colaborador/preferencias', { metodo: 'DELETE' });
 }

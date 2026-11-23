@@ -59,13 +59,21 @@ export const ColaboradorResumo = z
     setor: z.string(),
     codigoFuncionario: z.string(),
     ativo: z.boolean(),
+    aprovado: z.boolean().meta({ description: 'false enquanto o cadastro aguarda aprovação.' }),
     criadoEm: Instante,
   })
   .meta({ id: 'ColaboradorResumo' });
 
 export const EntradaAcesso = z
   .object({ ativo: z.boolean({ error: 'Informe se o acesso está ativo.' }) })
-  .meta({ id: 'EntradaAcesso' });
+  .meta({
+    id: 'EntradaAcesso',
+    description: 'ativo: true também aprova um cadastro pendente.',
+  });
+
+export const ResultadoSenhaTemporaria = z
+  .object({ senhaTemporaria: z.string() })
+  .meta({ id: 'ResultadoSenhaTemporaria' });
 
 export type FiltroIndicadoresDto = z.infer<typeof FiltroIndicadores>;
 export type IndicadoresDto = z.infer<typeof IndicadoresConsolidados>;

@@ -1,9 +1,13 @@
 # NutriCorp
 
+**Sistema publicado:** https://nutricorp-production.up.railway.app
+
 ## Índice
 * [Descrição do Projeto](#descrição-do-projeto)
 * [Objetivos](#objetivos)
 * [Funcionalidades](#funcionalidades)
+* [Perfis de Acesso](#perfis-de-acesso)
+* [Privacidade e LGPD](#privacidade-e-lgpd)
 * [Tecnologias Utilizadas](#tecnologias-utilizadas)
 * [Estrutura do Projeto](#estrutura-do-projeto)
 * [Protótipo](#protótipo)
@@ -45,28 +49,40 @@ A primeira versão do NutriCorp contempla as funcionalidades essenciais para dem
 9. Registro das refeições.
 10. Painel básico com indicadores consolidados.
 
+### Recursos complementares
+- Aprovação, pela organização, do cadastro de novos colaboradores.
+- Senha temporária gerada pelo RH e troca de senha pelo próprio usuário.
+- Consentimento explícito para uso dos dados de saúde e exclusão desses dados a qualquer momento (LGPD).
+- Edição e exclusão de refeições registradas.
+- Cardápios organizados por dia e indicadores por período (7, 15 ou 30 dias).
+
 ### Funcionalidades futuras
 
 Funcionalidades mais avançadas poderão ser incorporadas em versões futuras, como integração com sistemas corporativos, integração com restaurantes externos e recursos analíticos mais avançados.
 
+## Perfis de Acesso
+- **Organização (RH e cozinha):** cadastra cardápios, aprova e gerencia o acesso dos colaboradores e consulta indicadores agregados.
+- **Colaborador:** registra preferências e restrições, consulta cardápios e compatibilidade e registra as refeições consumidas. O acesso é liberado após a aprovação da organização.
+
+## Privacidade e LGPD
+Preferências e restrições alimentares são dados de saúde. O colaborador autoriza o uso antes de salvar e pode excluí-los quando quiser. A organização acessa apenas indicadores agregados, nunca as escolhas individuais.
+
 ## Tecnologias Utilizadas
 
 ### Front-end
-- React Native
-- React.js
+- React.js + TypeScript (Vite)
 
 ### Back-end
-- Node.js
-- TypeScript
+- Node.js + TypeScript (Express)
+- Zod e OpenAPI (documentação em `/api/docs`)
 
 ### Banco de Dados
 - PostgreSQL
 
 ### Infraestrutura e Ferramentas
 - Figma
-- GitHub
-- Docker
-- Railway
+- GitHub e GitHub Actions (testes automáticos)
+- Railway (aplicação e PostgreSQL)
 
 ## Estrutura do Projeto 
 
@@ -75,6 +91,7 @@ my-app/      Front-end (React + Vite)
 backend/     API (Node.js + TypeScript + Express)
 database/    Migrações do PostgreSQL
 docs/        Modelagem de dados e DER
+.github/     Testes automáticos (GitHub Actions)
 ```
 
 Em produção, um único serviço no Railway serve a API em `/api` e o front-end na raiz, usando o PostgreSQL do Railway.
@@ -122,7 +139,9 @@ npm install
 npm run dev          # front-end no endereço indicado pelo Vite
 ```
 
-Sem `DATABASE_URL`, a API usa dados em memória com uma base de demonstração (senha `NutriCorp123!` para `organizacao@nutricorp.dev` e `colaborador@nutricorp.dev`). Com `DATABASE_URL`, as migrações de `database/migrations` são aplicadas automaticamente. Detalhes em [backend/README.md](backend/README.md).
+Sem `DATABASE_URL`, a API usa dados em memória com uma base de demonstração. Com `DATABASE_URL`, as migrações de `database/migrations` são aplicadas automaticamente. Detalhes em [backend/README.md](backend/README.md).
+
+Contas de demonstração (senha `NutriCorp123!`): `organizacao@nutricorp.dev`, `colaborador@nutricorp.dev`, `bruno.lima@nutricorp.dev`, `carla.mendes@nutricorp.dev` (acesso desativado) e `diego.rocha@nutricorp.dev` (aguardando aprovação).
 
 ### Publicação (Railway)
 

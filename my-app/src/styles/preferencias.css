@@ -202,3 +202,39 @@
     grid-template-columns: 1fr;
   }
 }
+.preferencias-rodape {
+  flex-wrap: wrap;
+}
+.preferencias-consentimento {
+  order: -1;
+  flex-basis: 100%;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border: 1px solid #bdc6b8;
+  border-radius: 12px;
+  background: #f4f6f2;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.preferencias-consentimento input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--verde);
+}
+.preferencias-excluir {
+  width: auto;
+  min-height: 0;
+  padding: 0;
+  background: none;
+  color: #b3261e;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+}
+.preferencias-excluir:hover {
+  background: none;
+}

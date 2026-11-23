@@ -18,6 +18,7 @@ const PASTA_FRONTEND = fileURLToPath(new URL('../../my-app/dist/', import.meta.u
 export function criarApp(servicos: Servicos, config: Config) {
   const app = express();
   app.disable('x-powered-by');
+  app.set('trust proxy', 1);
   app.use(cors({ origin: config.origensCors }));
   app.use(express.json({ limit: '100kb' }));
 

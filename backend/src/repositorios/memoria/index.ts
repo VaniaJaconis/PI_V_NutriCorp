@@ -31,6 +31,10 @@ export function criarRepositoriosEmMemoria(): Repositorios {
         organizacoes.set(organizacao.id, organizacao);
         return copia(organizacao);
       },
+      async alterarSenha(id, senhaHash) {
+        const organizacao = organizacoes.get(id);
+        if (organizacao) organizacao.senhaHash = senhaHash;
+      },
       async buscarPorId(id) {
         return copiaOuNulo(organizacoes.get(id));
       },
@@ -88,6 +92,9 @@ export function criarRepositoriosEmMemoria(): Repositorios {
       async salvar(dados) {
         preferencias.set(dados.colaboradorId, copia(dados));
       },
+      async remover(colaboradorId) {
+        preferencias.delete(colaboradorId);
+      },
     },
 
     cardapios: {
@@ -136,6 +143,17 @@ export function criarRepositoriosEmMemoria(): Repositorios {
         const registro = novo<RegistroRefeicao>(dados);
         registros.push(registro);
         return copia(registro);
+      },
+      async atualizar(registro) {
+        const indice = registros.findIndex((r) => r.id === registro.id);
+        if (indice >= 0) registros[indice] = copia(registro);
+      },
+      async remover(id) {
+        const indice = registros.findIndex((r) => r.id === id);
+        if (indice >= 0) registros.splice(indice, 1);
+      },
+      async buscarPorId(id) {
+        return copiaOuNulo(registros.find((r) => r.id === id));
       },
       async buscarPorRequisicao(colaboradorId, requisicaoId) {
         return copiaOuNulo(

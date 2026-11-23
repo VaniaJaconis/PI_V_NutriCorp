@@ -7,3 +7,11 @@ export interface NovoColaborador {
   emailCorporativo: string;
   senha: string;
 }
+
+export interface ResultadoCadastroColaborador {
+  id: string;
+  nome: string;
+  organizacao: { id: string; nome: string };
+  situacao: 'pendente';
+  mensagem: string;
+}

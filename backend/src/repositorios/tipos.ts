@@ -12,6 +12,7 @@ export type Novo<T> = Omit<T, 'id'>;
 
 export interface RepositorioOrganizacoes {
   criar(organizacao: Novo<Organizacao>): Promise<Organizacao>;
+  alterarSenha(id: string, senhaHash: string): Promise<void>;
   buscarPorId(id: string): Promise<Organizacao | null>;
   buscarPorCnpj(cnpj: string): Promise<Organizacao | null>;
   buscarPorEmail(email: string): Promise<Organizacao | null>;
@@ -31,6 +32,7 @@ export interface RepositorioColaboradores {
 export interface RepositorioPreferencias {
   buscar(colaboradorId: string): Promise<Preferencias | null>;
   salvar(preferencias: Preferencias): Promise<void>;
+  remover(colaboradorId: string): Promise<void>;
 }
 
 export interface FiltroCardapios {
@@ -52,6 +54,9 @@ export interface RepositorioCardapios {
 
 export interface RepositorioRegistros {
   criar(registro: Novo<RegistroRefeicao>): Promise<RegistroRefeicao | null>;
+  atualizar(registro: RegistroRefeicao): Promise<void>;
+  remover(id: string): Promise<void>;
+  buscarPorId(id: string): Promise<RegistroRefeicao | null>;
   buscarPorRequisicao(colaboradorId: string, requisicaoId: string): Promise<RegistroRefeicao | null>;
   listarPorColaborador(colaboradorId: string): Promise<RegistroRefeicao[]>;
   listarPorOrganizacao(organizacaoId: string, dataInicio: string, dataFim: string): Promise<RegistroRefeicao[]>;

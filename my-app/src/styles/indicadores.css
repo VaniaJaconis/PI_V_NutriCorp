@@ -248,3 +248,31 @@
     min-width: 20px;
   }
 }
+.indicadores-periodo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 0 20px;
+  font-weight: 650;
+}
+.indicadores-periodo select {
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 1px solid #bdc6b8;
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+}
+.grafico-muitos {
+  gap: 3px;
+}
+.grafico-muitos .grafico-coluna {
+  min-width: 0;
+}
+.grafico-muitos .grafico-dia {
+  height: 42px;
+  font-size: 10px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}

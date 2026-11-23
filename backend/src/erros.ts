@@ -25,6 +25,12 @@ export const erros = {
       'acesso_inativo',
       'Seu acesso está desativado. Procure o RH da sua organização.',
     ),
+  acessoPendente: () =>
+    new ErroApi(
+      403,
+      'acesso_pendente',
+      'Seu cadastro aguarda a aprovação da sua organização.',
+    ),
   semPermissao: () =>
     new ErroApi(
       403,

@@ -27,6 +27,7 @@ export interface Colaborador {
   emailCorporativo: string;
   senhaHash: string;
   ativo: boolean;
+  aprovado: boolean;
   criadoEm: string;
 }
 
@@ -36,6 +37,7 @@ export interface Preferencias {
   alimentosEvitar: string;
   restricoes: RestricaoAlimentar[];
   outrasOrientacoes: string;
+  consentimentoEm: string | null;
   atualizadoEm: string;
 }
 

@@ -16,8 +16,10 @@ import {
 import { ParametroId, RespostaErro } from './comum.js';
 import {
   Credenciais,
+  EntradaAlterarSenha,
   NovaOrganizacao,
   NovoColaborador,
+  ResultadoCadastroColaborador,
   ResultadoLogin,
   Sessao,
 } from './contas.js';
@@ -26,6 +28,7 @@ import {
   EntradaAcesso,
   FiltroIndicadores,
   IndicadoresConsolidados,
+  ResultadoSenhaTemporaria,
 } from './organizacao.js';
 import {
   EntradaPreferencias,
@@ -33,6 +36,7 @@ import {
   ResultadoPreferencias,
 } from './preferencias.js';
 import {
+  EntradaAtualizacaoRegistro,
   EntradaRegistro,
   FiltroOpcoesRegistro,
   OpcaoRegistro,
@@ -106,10 +110,10 @@ export function gerarDocumentoOpenApi() {
       tags: ['Cadastro e acesso'],
       summary: 'Cadastrar colaborador',
       description:
-        'Tela: Cadastro do colaborador. "empresa" deve identificar uma organização já cadastrada. Já devolve a sessão autenticada.',
+        'Tela: Cadastro do colaborador. "empresa" deve identificar uma organização já cadastrada. O acesso só é liberado depois que a organização aprovar.',
       request: corpo(NovoColaborador),
       responses: {
-        201: json(ResultadoLogin, 'Colaborador cadastrado.'),
+        201: json(ResultadoCadastroColaborador, 'Cadastro enviado para aprovação.'),
         409: erro('CPF, e-mail ou código do funcionário já cadastrado.'),
         422: E422,
       },
@@ -127,8 +131,9 @@ export function gerarDocumentoOpenApi() {
       responses: {
         200: json(ResultadoLogin, 'Login realizado.'),
         401: erro('Usuário ou senha inválidos.'),
-        403: erro('Acesso do colaborador desativado pela organização.'),
+        403: erro('Cadastro aguardando aprovação ou acesso desativado pela organização.'),
         422: E422,
+        429: erro('Muitas tentativas. Limite de 20 a cada 15 minutos.'),
       },
     },
     true,
@@ -140,6 +145,14 @@ export function gerarDocumentoOpenApi() {
     summary: 'Dados da sessão atual',
     description: 'Use ao recarregar a página para recuperar nome e perfil a partir do token salvo.',
     responses: { 200: json(Sessao, 'Sessão válida.'), 403: E403 },
+  });
+  rota({
+    method: 'put',
+    path: '/api/auth/senha',
+    tags: ['Cadastro e acesso'],
+    summary: 'Alterar a própria senha',
+    request: corpo(EntradaAlterarSenha),
+    responses: { 204: { description: 'Senha alterada.' }, 422: E422 },
   });
 
   rota({
@@ -175,12 +188,20 @@ export function gerarDocumentoOpenApi() {
     path: '/api/colaborador/preferencias',
     tags: ['Colaborador'],
     summary: 'Salvar preferências e restrições',
+    description: 'Exige "consentimento": true (dados de saúde, LGPD).',
     request: corpo(EntradaPreferencias),
     responses: {
       200: json(ResultadoPreferencias, 'Preferências salvas.'),
       ...soColaborador,
       422: E422,
     },
+  });
+  rota({
+    method: 'delete',
+    path: '/api/colaborador/preferencias',
+    tags: ['Colaborador'],
+    summary: 'Excluir preferências e restrições',
+    responses: { 200: json(PreferenciasColaborador, 'Dados excluídos.'), ...soColaborador },
   });
   rota({
     method: 'get',
@@ -245,6 +266,22 @@ export function gerarDocumentoOpenApi() {
       ...soColaborador,
       422: E422,
     },
+  });
+  rota({
+    method: 'patch',
+    path: '/api/colaborador/registros/{id}',
+    tags: ['Colaborador'],
+    summary: 'Editar observações do registro',
+    request: { params: ParametroId, ...corpo(EntradaAtualizacaoRegistro) },
+    responses: { 200: json(RegistroRefeicao, 'Registro atualizado.'), ...soColaborador, 404: E404, 422: E422 },
+  });
+  rota({
+    method: 'delete',
+    path: '/api/colaborador/registros/{id}',
+    tags: ['Colaborador'],
+    summary: 'Excluir registro',
+    request: { params: ParametroId },
+    responses: { 204: { description: 'Excluído.' }, ...soColaborador, 404: E404 },
   });
 
   const soOrganizacao = { 403: E403 };
@@ -331,13 +368,25 @@ export function gerarDocumentoOpenApi() {
     method: 'patch',
     path: '/api/organizacao/colaboradores/{id}',
     tags: ['Organização'],
-    summary: 'Ativar ou desativar o acesso do colaborador',
+    summary: 'Aprovar, ativar ou desativar o acesso do colaborador',
     request: { params: ParametroId, ...corpo(EntradaAcesso) },
     responses: {
       200: json(ColaboradorResumo, 'Acesso atualizado.'),
       ...soOrganizacao,
       404: E404,
       422: E422,
+    },
+  });
+  rota({
+    method: 'post',
+    path: '/api/organizacao/colaboradores/{id}/senha',
+    tags: ['Organização'],
+    summary: 'Gerar senha temporária para o colaborador',
+    request: { params: ParametroId },
+    responses: {
+      200: json(ResultadoSenhaTemporaria, 'Senha gerada. Repasse ao colaborador.'),
+      ...soOrganizacao,
+      404: E404,
     },
   });
 
