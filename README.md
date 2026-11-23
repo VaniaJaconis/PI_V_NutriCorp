@@ -1,4 +1,6 @@
-# NutriCorp
+
+<h5 align="left"><br><img width="775" height="182" alt="image (34)" src="https://github.com/user-attachments/assets/32540959-8393-4164-987c-6533571b1c0a" /><br>
+Logo criado para a NutriCorp que consiste no nome do projeto escrito com letras verdes com estilo que remete à tecnologia.
 
 **Sistema publicado:** https://nutricorp-production.up.railway.app
 
