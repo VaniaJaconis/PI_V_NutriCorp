@@ -1,0 +1,223 @@
+.pagina-compatibilidade {
+  position: relative;
+  max-width: 1408px;
+  margin: 0 auto;
+  padding: 12px 52px 24px 82px;
+}
+.pagina-compatibilidade .marca {
+  font-size: 48px;
+  line-height: 1.2;
+  margin: 0 0 26px;
+}
+.compatibilidade-voltar {
+  position: absolute;
+  top: 8px;
+  left: 16px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 3px solid #242424;
+  border-radius: 50%;
+  text-decoration: none;
+  color: #242424;
+  font-size: 25px;
+  line-height: 1;
+}
+.pagina-compatibilidade h1 {
+  text-align: left;
+  font-size: 22px;
+  line-height: 1.4;
+  margin: 0 0 4px;
+}
+.compatibilidade-subtitulo {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 18px;
+}
+.compatibilidade-aviso {
+  padding: 14px 18px;
+  background: #faeae5;
+  color: #a33322;
+  border-radius: 14px;
+  margin-bottom: 18px;
+}
+.compatibilidade-aviso h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+.compatibilidade-aviso p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 4px 0 0;
+}
+.compatibilidade-paineis {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 24px;
+}
+.compatibilidade-painel {
+  min-width: 0;
+  background: #d9d9d9;
+  padding: 18px 21px 20px;
+  border-radius: 14px;
+}
+.compatibilidade-painel h2 {
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+.compatibilidade-tabela {
+  width: 100%;
+  border-spacing: 0 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  table-layout: fixed;
+}
+.compatibilidade-tabela th,
+.compatibilidade-tabela td {
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.compatibilidade-tabela thead th {
+  font-size: 11px;
+  padding-bottom: 3px;
+}
+.compatibilidade-tabela tbody th {
+  font-weight: 400;
+}
+.compatibilidade-tabela tbody th,
+.compatibilidade-tabela td {
+  padding: 6px 12px;
+  background: #fff;
+}
+.compatibilidade-tabela tbody th {
+  border-radius: 18px 0 0 18px;
+}
+.compatibilidade-tabela td {
+  border-radius: 0 18px 18px 0;
+  font-weight: 650;
+}
+.compatibilidade-texto-verde {
+  color: var(--verde);
+}
+.compatibilidade-texto-alerta {
+  color: #a33322;
+}
+.compatibilidade-alternativa h3 {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 22px;
+}
+.compatibilidade-alternativa p {
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0 0 22px;
+}
+.compatibilidade-alternativa button {
+  font-size: 13px;
+  min-height: 40px;
+  border-radius: 13px;
+}
+.compatibilidade-alternativa button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+.compatibilidade-rodape {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 20px;
+  align-items: flex-start;
+}
+.compatibilidade-rodape p {
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0 0 4px;
+}
+.compatibilidade-rodape p:not(:first-child) {
+  color: #60675c;
+}
+.compatibilidade-revisar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-height: 40px;
+  width: 228px;
+  padding: 10px;
+  border: 1px solid #bdc6b8;
+  border-radius: 13px;
+  text-decoration: none;
+  color: #4a4a4a;
+  font-size: 13px;
+  font-weight: 750;
+}
+.compatibilidade-revisar:hover {
+  background: #f4f6f2;
+}
+.compatibilidade-feedback {
+  color: var(--verde);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.compatibilidade-feedback:empty {
+  margin: 0;
+}
+.compatibilidade-repetir {
+  width: auto;
+  font-size: 16px;
+}
+.compatibilidade-voltar:focus-visible,
+.compatibilidade-revisar:focus-visible {
+  outline: 3px solid #40782b;
+  outline-offset: 3px;
+}
+.cardapios-ver-compatibilidade {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 12px 18px;
+  border-radius: 13px;
+  background: var(--verde);
+  color: white;
+  text-decoration: none;
+  font-size: 14px;
+}
+.cardapios-ver-compatibilidade:focus-visible {
+  outline: 3px solid #40782b;
+  outline-offset: 3px;
+}
+@media (max-width: 900px) {
+  .pagina-compatibilidade {
+    padding: 20px 24px 32px;
+  }
+  .compatibilidade-paineis {
+    grid-template-columns: 1fr;
+  }
+  .compatibilidade-rodape {
+    flex-direction: column;
+  }
+}
+@media (max-width: 520px) {
+  .pagina-compatibilidade {
+    padding-inline: 16px;
+  }
+  .pagina-compatibilidade .marca {
+    font-size: 36px;
+    margin-bottom: 32px;
+  }
+  .pagina-compatibilidade h1 {
+    font-size: 21px;
+  }
+  .compatibilidade-painel {
+    padding: 16px 12px;
+  }
+  .compatibilidade-tabela tbody th,
+  .compatibilidade-tabela td {
+    padding: 8px;
+  }
+  .compatibilidade-revisar {
+    width: 100%;
+  }
+}
