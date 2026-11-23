@@ -126,7 +126,7 @@ Sem `DATABASE_URL`, a API usa dados em memória com uma base de demonstração (
 
 ### Publicação (Railway)
 
-1. Crie um projeto no Railway com um banco **PostgreSQL** e um serviço a partir deste repositório (a configuração está em `railway.json`).
+1. Crie um projeto no Railway com um banco **PostgreSQL** e um serviço a partir deste repositório. O Railway usa os scripts `build` e `start` do `package.json` da raiz.
 2. No serviço, defina as variáveis `DATABASE_URL=${{Postgres.DATABASE_URL}}`, `JWT_SECRET` (texto aleatório com 32 caracteres ou mais) e, se quiser os dados de demonstração, `SEED_DEMO=true`.
 3. Em *Networking*, gere um domínio público.
 
