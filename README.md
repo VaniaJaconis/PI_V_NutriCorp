@@ -69,7 +69,15 @@ Funcionalidades mais avançadas poderão ser incorporadas em versões futuras, c
 - Railway
 
 ## Estrutura do Projeto 
---- WIP ---
+
+```
+my-app/      Front-end (React + Vite)
+backend/     API (Node.js + TypeScript + Express)
+database/    Migrações do PostgreSQL
+docs/        Modelagem de dados e DER
+```
+
+Em produção, um único serviço no Railway serve a API em `/api` e o front-end na raiz, usando o PostgreSQL do Railway.
 
 ## Protótipo
 
@@ -98,13 +106,29 @@ Funcionalidades mais avançadas poderão ser incorporadas em versões futuras, c
 
 ## Intruções de Execução
 
-### Back-end
+Requisito: Node.js 20.12 ou superior.
+
 ```bash
 cd backend
 npm install
-npm run dev
+npm run dev          # API em http://localhost:3333/api (documentação em /api/docs)
 ```
-A API sobe em http://localhost:3333/api, com a documentação em http://localhost:3333/api/docs. Detalhes em [backend/README.md](backend/README.md).
+
+Em outro terminal:
+
+```bash
+cd my-app
+npm install
+npm run dev          # front-end no endereço indicado pelo Vite
+```
+
+Sem `DATABASE_URL`, a API usa dados em memória com uma base de demonstração (senha `NutriCorp123!` para `organizacao@nutricorp.dev` e `colaborador@nutricorp.dev`). Com `DATABASE_URL`, as migrações de `database/migrations` são aplicadas automaticamente. Detalhes em [backend/README.md](backend/README.md).
+
+### Publicação (Railway)
+
+1. Crie um projeto no Railway com um banco **PostgreSQL** e um serviço a partir deste repositório (a configuração está em `railway.json`).
+2. No serviço, defina as variáveis `DATABASE_URL=${{Postgres.DATABASE_URL}}`, `JWT_SECRET` (texto aleatório com 32 caracteres ou mais) e, se quiser os dados de demonstração, `SEED_DEMO=true`.
+3. Em *Networking*, gere um domínio público.
 
 ## Autores do Projeto
 - Ana Rita Fonseca Ferreira

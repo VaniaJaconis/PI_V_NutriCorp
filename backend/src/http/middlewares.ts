@@ -13,7 +13,6 @@ declare global {
   }
 }
 
-/** Valida com o esquema do contrato e devolve 422 com uma mensagem por campo. */
 export function validar<S extends z.ZodType>(esquema: S, dados: unknown): z.output<S> {
   const resultado = esquema.safeParse(dados ?? {});
   if (resultado.success) return resultado.data;
@@ -71,6 +70,12 @@ export const tratarErros: ErrorRequestHandler = (erro, _req, res, _next) => {
   if (erro?.type === 'entity.too.large') {
     res.status(413).json({
       erro: { codigo: 'corpo_muito_grande', mensagem: 'O corpo da requisição é muito grande.' },
+    });
+    return;
+  }
+  if (erro?.code === '23505') {
+    res.status(409).json({
+      erro: { codigo: 'conflito', mensagem: 'Já existe um cadastro com esses dados.' },
     });
     return;
   }

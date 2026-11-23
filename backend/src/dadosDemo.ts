@@ -1,6 +1,5 @@
-// Dados de demonstração para rodar o frontend contra a API sem cadastrar tudo à mão.
-// Senha de todas as contas: NutriCorp123!
 import type { EntradaCardapioDto } from './contratos/cardapios.js';
+import type { Repositorios } from './repositorios/tipos.js';
 import type { Servicos } from './servicos/index.js';
 import { hoje, somarDias } from './util/datas.js';
 
@@ -53,7 +52,8 @@ const lanche: Modelo = {
   nutricional: { porcaoGramas: 250, energiaKcal: 310, carboidratosG: 52, proteinasG: 9, gordurasG: 7, sodioMg: 85 },
 };
 
-export async function popularDadosDemo(servicos: Servicos) {
+export async function popularDadosDemo(servicos: Servicos, repos: Repositorios) {
+  if (await repos.organizacoes.buscarPorCnpj('11222333000181')) return;
   const organizacao = await servicos.contas.cadastrarOrganizacao({
     razaoSocial: 'NutriCorp Demonstração Ltda',
     cnpj: '11.222.333/0001-81',

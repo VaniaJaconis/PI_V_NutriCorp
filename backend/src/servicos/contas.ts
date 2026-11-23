@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import type {
   CredenciaisDto,
   NovaOrganizacaoDto,
@@ -68,8 +67,7 @@ export function criarServicoContas(repos: Repositorios, tokens: ServicoTokens) {
         campos.emailComunicacao = 'E-mail já cadastrado.';
       if (Object.keys(campos).length) throw erros.conflito(campos);
 
-      const organizacao: Organizacao = {
-        id: randomUUID(),
+      const organizacao = await repos.organizacoes.criar({
         razaoSocial: dados.razaoSocial,
         cnpj,
         nomeFantasia: dados.nomeFantasia,
@@ -77,8 +75,7 @@ export function criarServicoContas(repos: Repositorios, tokens: ServicoTokens) {
         emailComunicacao: email,
         senhaHash: await gerarHashSenha(dados.senha),
         criadoEm: new Date().toISOString(),
-      };
-      await repos.organizacoes.criar(organizacao);
+      });
       return autenticar(organizacao.id, organizacao.nomeFantasia, 'organizacao', organizacao);
     },
 
@@ -95,8 +92,7 @@ export function criarServicoContas(repos: Repositorios, tokens: ServicoTokens) {
         campos.codigoFuncionario = 'Código já cadastrado nesta organização.';
       if (Object.keys(campos).length) throw erros.conflito(campos);
 
-      const colaborador = {
-        id: randomUUID(),
+      const colaborador = await repos.colaboradores.criar({
         organizacaoId: organizacao.id,
         nomeCompleto: dados.nomeCompleto.replace(/\s+/g, ' '),
         cpf,
@@ -106,8 +102,7 @@ export function criarServicoContas(repos: Repositorios, tokens: ServicoTokens) {
         senhaHash: await gerarHashSenha(dados.senha),
         ativo: true,
         criadoEm: new Date().toISOString(),
-      };
-      await repos.colaboradores.criar(colaborador);
+      });
       return autenticar(colaborador.id, colaborador.nomeCompleto, 'colaborador', organizacao);
     },
 
@@ -126,7 +121,6 @@ export function criarServicoContas(repos: Repositorios, tokens: ServicoTokens) {
       return autenticar(colaborador.id, colaborador.nomeCompleto, 'colaborador', organizacao);
     },
 
-    /** Recarrega a conta a cada requisição: desativações valem na hora. */
     async carregarSessao({ id, perfil }: DadosToken): Promise<SessaoDto | null> {
       if (perfil === 'organizacao') {
         const organizacao = await repos.organizacoes.buscarPorId(id);

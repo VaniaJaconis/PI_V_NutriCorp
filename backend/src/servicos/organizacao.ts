@@ -12,7 +12,6 @@ import { contarDias, diaSemanaCurto, diasNoIntervalo, hoje, somarDias } from '..
 const percentual = (parte: number, total: number) =>
   total ? Math.round((parte / total) * 100) : 0;
 
-/** Percentuais inteiros que somam exatamente 100 (método do maior resto). */
 function distribuir(valores: number[]): number[] {
   const total = valores.reduce((soma, v) => soma + v, 0);
   if (!total) return valores.map(() => 0);

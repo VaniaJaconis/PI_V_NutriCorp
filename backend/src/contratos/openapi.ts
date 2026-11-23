@@ -73,7 +73,6 @@ export function gerarDocumentoOpenApi() {
       },
     });
 
-  // Cadastro e acesso
   rota(
     {
       method: 'get',
@@ -143,7 +142,6 @@ export function gerarDocumentoOpenApi() {
     responses: { 200: json(Sessao, 'Sessão válida.'), 403: E403 },
   });
 
-  // Consulta de cardápios
   rota({
     method: 'get',
     path: '/api/cardapios',
@@ -163,7 +161,6 @@ export function gerarDocumentoOpenApi() {
     responses: { 200: json(Refeicao, 'Cardápio.'), 404: E404 },
   });
 
-  // Colaborador
   const soColaborador = { 403: E403 };
   rota({
     method: 'get',
@@ -250,7 +247,6 @@ export function gerarDocumentoOpenApi() {
     },
   });
 
-  // Organização
   const soOrganizacao = { 403: E403 };
   rota({
     method: 'get',

@@ -1,0 +1,5 @@
+.marca {
+  color: transparent;
+  background: url('/logo.png') center / contain no-repeat;
+  user-select: none;
+}

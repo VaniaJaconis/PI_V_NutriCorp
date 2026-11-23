@@ -1,16 +1,31 @@
 import request from 'supertest';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type { Express } from 'express';
 import { criarApp } from '../src/app.js';
 import { carregarConfig } from '../src/config.js';
 import { popularDadosDemo } from '../src/dadosDemo.js';
 import { criarRepositoriosEmMemoria } from '../src/repositorios/memoria/index.js';
+import { criarPool, criarRepositoriosPostgres, migrar } from '../src/repositorios/postgres/index.js';
+import type { Repositorios } from '../src/repositorios/tipos.js';
 import { criarServicos } from '../src/servicos/index.js';
 import { hoje, somarDias } from '../src/util/datas.js';
 
-function montar() {
+const bancos: [string, string][] = [['memória', '']];
+if (process.env.TEST_DATABASE_URL) bancos.push(['PostgreSQL', process.env.TEST_DATABASE_URL]);
+
+async function montar(url = '') {
   const config = carregarConfig({ NODE_ENV: 'test' });
-  const servicos = criarServicos(criarRepositoriosEmMemoria(), config);
-  return { app: criarApp(servicos, config), servicos };
+  let repos: Repositorios;
+  if (url) {
+    const pool = criarPool(url);
+    await pool.query('DROP SCHEMA IF EXISTS nutricorp CASCADE; DROP TABLE IF EXISTS public.migracoes');
+    await migrar(pool);
+    repos = criarRepositoriosPostgres(pool);
+  } else {
+    repos = criarRepositoriosEmMemoria();
+  }
+  const servicos = criarServicos(repos, config);
+  return { app: criarApp(servicos, config), servicos, repos };
 }
 
 const SENHA = 'SenhaForte123';
@@ -50,8 +65,9 @@ const cardapioBase = {
   nutricional,
 };
 
-describe('fluxo principal da API', () => {
-  const { app } = montar();
+describe.each(bancos)('fluxo principal da API (%s)', (_nome, url) => {
+  let app: Express;
+  let repos: Repositorios;
   const api = () => request(app);
   let tokenOrg = '';
   let tokenColab = '';
@@ -60,7 +76,12 @@ describe('fluxo principal da API', () => {
   let vegetarianoId = '';
   const bearer = (token: string) => ({ Authorization: `Bearer ${token}` });
 
+  afterAll(async () => {
+    await repos?.encerrar?.();
+  });
+
   beforeAll(async () => {
+    ({ app, repos } = await montar(url));
     const org = await api().post('/api/organizacoes').send(organizacao);
     expect(org.status).toBe(201);
     expect(org.body).toMatchObject({ perfil: 'organizacao', nome: 'Alfa', modo: 'api' });
@@ -319,7 +340,7 @@ describe('fluxo principal da API', () => {
 
 describe('infraestrutura', () => {
   it('responde JSON inválido e rota inexistente no formato de erro', async () => {
-    const { app } = montar();
+    const { app } = await montar();
     const invalido = await request(app)
       .post('/api/auth/login')
       .set('Content-Type', 'application/json')
@@ -330,15 +351,18 @@ describe('infraestrutura', () => {
   });
 
   it('publica o contrato OpenAPI', async () => {
-    const { app } = montar();
+    const { app } = await montar();
     const resposta = await request(app).get('/api/openapi.json');
     expect(resposta.body.openapi).toBe('3.0.3');
     expect(Object.keys(resposta.body.paths)).toContain('/api/organizacao/indicadores');
   });
+});
 
-  it('carrega os dados de demonstração', async () => {
-    const { app, servicos } = montar();
-    await popularDadosDemo(servicos);
+describe.each(bancos)('dados de demonstração (%s)', (_nome, url) => {
+  it('carrega uma única vez', async () => {
+    const { app, servicos, repos } = await montar(url);
+    await popularDadosDemo(servicos, repos);
+    await popularDadosDemo(servicos, repos);
     const login = await request(app)
       .post('/api/auth/login')
       .send({ usuario: 'organizacao@nutricorp.dev', senha: 'NutriCorp123!' });
@@ -347,5 +371,6 @@ describe('infraestrutura', () => {
       .set({ Authorization: `Bearer ${login.body.token}` });
     expect(indicadores.body).toMatchObject({ colaboradoresAtivos: 2, taxaAdesao: 100 });
     expect(indicadores.body.refeicoesRegistradas).toBe(8);
+    await repos.encerrar?.();
   });
 });

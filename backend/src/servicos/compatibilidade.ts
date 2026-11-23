@@ -1,4 +1,3 @@
-// Regra de negócio: comparar os pratos com as preferências e restrições do colaborador.
 import type { AvaliacaoDto, PratoDto } from '../contratos/cardapios.js';
 import type { Preferencias } from '../dominio/entidades.js';
 import {
@@ -29,11 +28,6 @@ function itensEvitar(texto: string): string[] {
   ];
 }
 
-/**
- * incompativel: contém uma restrição ou não atende ao perfil alimentar.
- * parcial: só traços, alimentos que o colaborador prefere evitar ou dados incompletos.
- * compativel: nenhum alerta.
- */
 export function avaliarPrato(
   prato: PratoDto,
   preferencias: PreferenciasAvaliacao = PREFERENCIAS_PADRAO,

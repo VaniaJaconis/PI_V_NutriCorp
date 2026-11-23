@@ -7,7 +7,6 @@ const formatoData = new Intl.DateTimeFormat('en-CA', {
 });
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-/** Data atual (AAAA-MM-DD) no fuso de São Paulo. */
 export function hoje(agora = new Date()): string {
   return formatoData.format(agora);
 }
@@ -23,7 +22,6 @@ export function dataValida(valor: string): boolean {
   );
 }
 
-/** Quantidade de dias de `inicio` a `fim`, inclusive (0 se fim < inicio). */
 export function contarDias(inicio: string, fim: string): number {
   const dias = (Date.parse(fim) - Date.parse(inicio)) / 86_400_000 + 1;
   return Number.isFinite(dias) ? Math.max(0, Math.round(dias)) : 0;
@@ -35,7 +33,6 @@ export function somarDias(data: string, dias: number): string {
   return valor.toISOString().slice(0, 10);
 }
 
-/** Lista as datas de `inicio` a `fim`, inclusive. */
 export function diasNoIntervalo(inicio: string, fim: string): string[] {
   const dias: string[] = [];
   for (let dia = inicio; dia <= fim; dia = somarDias(dia, 1)) dias.push(dia);

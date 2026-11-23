@@ -4,7 +4,6 @@ import { ParametroId } from '../../contratos/comum.js';
 import type { Servicos } from '../../servicos/index.js';
 import { exigirSessao, sessaoDe, validar } from '../middlewares.js';
 
-/** Consulta de cardápios: colaborador (só publicados) e organização (todos). */
 export function rotasCardapios(servicos: Servicos) {
   const rotas = Router();
   rotas.use(exigirSessao(servicos));

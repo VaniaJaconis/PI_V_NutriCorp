@@ -16,7 +16,6 @@ function scrypt(senha: string, sal: Buffer, opcoes: ScryptOptions) {
   );
 }
 
-/** Formato: scrypt$N$r$p$sal$hash (base64url). */
 export async function gerarHashSenha(senha: string): Promise<string> {
   const sal = randomBytes(16);
   const hash = await scrypt(senha, sal, PARAMETROS);
@@ -37,7 +36,6 @@ export async function conferirSenha(senha: string, armazenado: string): Promise<
 }
 
 let hashFicticio: Promise<string> | undefined;
-/** Usado quando o usuário não existe, para o login levar o mesmo tempo nos dois casos. */
 export function obterHashFicticio(): Promise<string> {
   hashFicticio ??= gerarHashSenha(randomBytes(16).toString('hex'));
   return hashFicticio;

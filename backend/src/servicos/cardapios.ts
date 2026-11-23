@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import type {
   CardapioOrganizacaoDto,
   CompatibilidadeRefeicaoDto,
@@ -10,12 +9,11 @@ import type {
 import type { SessaoDto } from '../contratos/contas.js';
 import type { Cardapio } from '../dominio/entidades.js';
 import { erros } from '../erros.js';
-import type { Repositorios } from '../repositorios/tipos.js';
+import type { Novo, Repositorios } from '../repositorios/tipos.js';
 import { avaliarPrato } from './compatibilidade.js';
 
 const semRepetidos = <T>(lista: T[]) => [...new Set(lista)];
 
-/** O cadastro da organização descreve um prato completo; a consulta usa o formato Refeicao/Prato do frontend. */
 export function paraPrato(cardapio: Cardapio): PratoDto {
   const n = cardapio.nutricional;
   const nutrientes = (
@@ -76,7 +74,6 @@ export function criarServicoCardapios(repos: Repositorios) {
     return cardapio;
   }
 
-  /** O colaborador só enxerga cardápios publicados da própria organização. */
   async function visivel(sessao: SessaoDto, id: string) {
     const cardapio = await daOrganizacao(sessao.organizacao.id, id);
     if (sessao.perfil === 'colaborador' && cardapio.estado !== 'publicado')
@@ -88,11 +85,10 @@ export function criarServicoCardapios(repos: Repositorios) {
     organizacaoId: string,
     dados: EntradaCardapioDto,
     anterior?: Cardapio,
-  ): Cardapio {
+  ): Novo<Cardapio> {
     const agora = new Date().toISOString();
     return {
       ...dados,
-      id: anterior?.id ?? randomUUID(),
       organizacaoId,
       alergenos: semRepetidos(dados.alergenos),
       podeConter: semRepetidos(dados.podeConter).filter(
@@ -158,13 +154,13 @@ export function criarServicoCardapios(repos: Repositorios) {
     },
 
     async criar(organizacaoId: string, dados: EntradaCardapioDto) {
-      const cardapio = montar(organizacaoId, dados);
-      await repos.cardapios.criar(cardapio);
+      const cardapio = await repos.cardapios.criar(montar(organizacaoId, dados));
       return paraCardapioOrganizacao(cardapio);
     },
 
     async atualizar(organizacaoId: string, id: string, dados: EntradaCardapioDto) {
-      const cardapio = montar(organizacaoId, dados, await daOrganizacao(organizacaoId, id));
+      const anterior = await daOrganizacao(organizacaoId, id);
+      const cardapio = { ...montar(organizacaoId, dados, anterior), id };
       await repos.cardapios.atualizar(cardapio);
       return paraCardapioOrganizacao(cardapio);
     },

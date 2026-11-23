@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import type { SessaoDto } from '../contratos/contas.js';
 import type {
   EntradaRegistroDto,
@@ -19,46 +18,6 @@ function paraDto(registro: RegistroRefeicao): RegistroRefeicaoDto {
 }
 
 export function criarServicoRegistros(repos: Repositorios) {
-  // Evita duplicidade quando o mesmo envio chega duas vezes ao mesmo tempo.
-  // No PostgreSQL, a garantia final é a chave única (colaborador_id, requisicao_id).
-  const emAndamento = new Map<string, Promise<{ registro: RegistroRefeicaoDto; criado: boolean }>>();
-
-  async function registrar(sessao: SessaoDto, dados: EntradaRegistroDto) {
-    const anterior = await repos.registros.buscarPorRequisicao(sessao.id, dados.requisicaoId);
-    if (anterior) return { registro: paraDto(anterior), criado: false };
-
-    const cardapio = await repos.cardapios.buscarPorId(dados.opcaoId);
-    if (
-      !cardapio ||
-      cardapio.organizacaoId !== sessao.organizacao.id ||
-      cardapio.estado !== 'publicado' ||
-      cardapio.data !== dados.data ||
-      cardapio.refeicao !== dados.tipo
-    )
-      throw erros.validacao({
-        opcaoId: 'Refeição indisponível para a data e o tipo informados.',
-      });
-
-    const prato = paraPrato(cardapio);
-    const preferencias = (await repos.preferencias.buscar(sessao.id)) ?? undefined;
-    const registro: RegistroRefeicao = {
-      id: randomUUID(),
-      colaboradorId: sessao.id,
-      organizacaoId: sessao.organizacao.id,
-      cardapioId: cardapio.id,
-      requisicaoId: dados.requisicaoId,
-      data: dados.data,
-      tipo: dados.tipo,
-      nomeRefeicao: prato.nome,
-      energia: cardapio.nutricional.energiaKcal,
-      observacoes: dados.observacoes,
-      situacao: avaliarPrato(prato, preferencias).situacao,
-      registradoEm: new Date().toISOString(),
-    };
-    await repos.registros.criar(registro);
-    return { registro: paraDto(registro), criado: true };
-  }
-
   return {
     async listarOpcoes(sessao: SessaoDto, data = hoje()): Promise<OpcaoRegistroDto[]> {
       const [cardapios, preferencias] = await Promise.all([
@@ -89,16 +48,40 @@ export function criarServicoRegistros(repos: Repositorios) {
     },
 
     async registrar(sessao: SessaoDto, dados: EntradaRegistroDto) {
-      const chave = `${sessao.id}:${dados.requisicaoId}`;
-      const pendente = emAndamento.get(chave);
-      if (pendente) return { ...(await pendente), criado: false };
-      const tarefa = registrar(sessao, dados);
-      emAndamento.set(chave, tarefa);
-      try {
-        return await tarefa;
-      } finally {
-        emAndamento.delete(chave);
-      }
+      const anterior = await repos.registros.buscarPorRequisicao(sessao.id, dados.requisicaoId);
+      if (anterior) return { registro: paraDto(anterior), criado: false };
+
+      const cardapio = await repos.cardapios.buscarPorId(dados.opcaoId);
+      if (
+        !cardapio ||
+        cardapio.organizacaoId !== sessao.organizacao.id ||
+        cardapio.estado !== 'publicado' ||
+        cardapio.data !== dados.data ||
+        cardapio.refeicao !== dados.tipo
+      )
+        throw erros.validacao({
+          opcaoId: 'Refeição indisponível para a data e o tipo informados.',
+        });
+
+      const prato = paraPrato(cardapio);
+      const preferencias = (await repos.preferencias.buscar(sessao.id)) ?? undefined;
+      const novo = {
+        colaboradorId: sessao.id,
+        organizacaoId: sessao.organizacao.id,
+        cardapioId: cardapio.id,
+        requisicaoId: dados.requisicaoId,
+        data: dados.data,
+        tipo: dados.tipo,
+        nomeRefeicao: prato.nome,
+        energia: cardapio.nutricional.energiaKcal,
+        observacoes: dados.observacoes,
+        situacao: avaliarPrato(prato, preferencias).situacao,
+        registradoEm: new Date().toISOString(),
+      };
+      const registro = await repos.registros.criar(novo);
+      if (registro) return { registro: paraDto(registro), criado: true };
+      const existente = await repos.registros.buscarPorRequisicao(sessao.id, dados.requisicaoId);
+      return { registro: paraDto(existente!), criado: false };
     },
   };
 }

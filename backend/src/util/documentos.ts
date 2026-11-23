@@ -1,4 +1,3 @@
-// Mesmas regras usadas no frontend (my-app/src/validation).
 
 export function somenteDigitos(valor: string): string {
   return valor.replace(/\D/g, '');
@@ -21,8 +20,6 @@ export function normalizarCnpj(valor: string): string {
   return valor.toUpperCase().replace(/[^A-Z0-9]/g, '');
 }
 
-// Módulo 11 com valor ASCII - 48: atende ao CNPJ numérico e ao alfanumérico.
-// Fonte: https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/documentos-tecnicos/cnpj/manual-dv-cnpj.pdf
 export function cnpjValido(valor: string): boolean {
   const cnpj = normalizarCnpj(valor);
   if (!/^[A-Z0-9]{12}\d{2}$/.test(cnpj) || /^(.)\1{13}$/.test(cnpj))
@@ -40,7 +37,6 @@ export function cnpjValido(valor: string): boolean {
   return true;
 }
 
-/** Minúsculas, sem acentos e com espaços simples: usado para comparar textos livres. */
 export function normalizarTexto(valor: string): string {
   return valor
     .normalize('NFD')

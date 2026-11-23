@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import cors from 'cors';
 import express from 'express';
 import swaggerUi from 'swagger-ui-express';
@@ -11,6 +13,8 @@ import { rotasOrganizacao } from './http/rotas/organizacao.js';
 import { rotasPublicas } from './http/rotas/publicas.js';
 import type { Servicos } from './servicos/index.js';
 
+const PASTA_FRONTEND = fileURLToPath(new URL('../../my-app/dist/', import.meta.url));
+
 export function criarApp(servicos: Servicos, config: Config) {
   const app = express();
   app.disable('x-powered-by');
@@ -18,7 +22,6 @@ export function criarApp(servicos: Servicos, config: Config) {
   app.use(express.json({ limit: '100kb' }));
 
   const documento = gerarDocumentoOpenApi();
-  app.get('/', (_req, res) => res.redirect('/api/docs'));
   app.get('/api/openapi.json', (_req, res) => {
     res.json(documento);
   });
@@ -31,6 +34,10 @@ export function criarApp(servicos: Servicos, config: Config) {
   app.use('/api', () => {
     throw erros.naoEncontrado('Rota não encontrada.');
   });
+
+  if (existsSync(PASTA_FRONTEND)) app.use(express.static(PASTA_FRONTEND));
+  else app.get('/', (_req, res) => res.redirect('/api/docs'));
+
   app.use(tratarErros);
   return app;
 }
